@@ -80,6 +80,7 @@ function RegistrationForm() {
 
   return (
     <>
+      {/* Form to fill with required informations */}
       <Card className="w-full max-w-sm">
         <CardHeader>
           <CardTitle>Créer un compte</CardTitle>
@@ -234,6 +235,7 @@ function RegistrationForm() {
         </CardFooter>
       </Card>
 
+      {/* This dialog is displayed for form validation */}
       <AlertDialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
