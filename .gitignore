@@ -12,6 +12,7 @@ dist
 dist-ssr
 coverage
 docs
+public/docs
 *.local
 
 # Editor directories and files
