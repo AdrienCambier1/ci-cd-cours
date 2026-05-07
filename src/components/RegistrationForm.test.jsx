@@ -1,6 +1,24 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import RegistrationForm from "./RegistrationForm";
 
+const selectBirthDate = (date) => {
+  const [year, month] = date.split("-");
+
+  fireEvent.click(screen.getByRole("button", { name: "Sélectionner une date" }));
+  fireEvent.change(screen.getByLabelText("Choose the Year"), {
+    target: { value: year },
+  });
+  fireEvent.change(screen.getByLabelText("Choose the Month"), {
+    target: { value: String(Number(month) - 1) },
+  });
+
+  const dayButton = document.querySelector(
+    `[role="gridcell"][data-day="${date}"] button`,
+  );
+  expect(dayButton).toBeInTheDocument();
+  fireEvent.click(dayButton);
+};
+
 const fillValidForm = () => {
   fireEvent.change(screen.getByLabelText("Nom"), {
     target: { value: "Dupont" },
@@ -11,9 +29,7 @@ const fillValidForm = () => {
   fireEvent.change(screen.getByLabelText("Email"), {
     target: { value: "jean@example.com" },
   });
-  fireEvent.change(screen.getByLabelText("Date de naissance"), {
-    target: { value: "1990-01-01" },
-  });
+  selectBirthDate("1990-01-01");
   fireEvent.change(screen.getByLabelText("Ville"), {
     target: { value: "Paris" },
   });
@@ -72,14 +88,15 @@ describe("RegistrationForm Integration Test Suites", () => {
     expect(stored.postalCode).toBe("75001");
   });
 
-  it("should not submit and show error when birth date makes user under 18", () => {
+  it("should prevent typing directly in the birth date field", () => {
     render(<RegistrationForm />);
-    fillValidForm();
-    fireEvent.change(screen.getByLabelText("Date de naissance"), {
+    const birthDateInput = screen.getByLabelText("Date de naissance");
+
+    expect(birthDateInput).toHaveAttribute("readonly");
+    fireEvent.change(birthDateInput, {
       target: { value: "2020-01-01" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "S'inscrire" }));
-    expect(screen.getByTestId("error-birthDate")).toBeInTheDocument();
-    expect(localStorage.getItem("registrationData")).toBeNull();
+
+    expect(birthDateInput).toHaveValue("");
   });
 });

@@ -27,20 +27,9 @@ export function DatePickerInput({ id, name, onChange, "aria-invalid": ariaInvali
   const [month, setMonth] = useState(undefined);
   const [value, setValue] = useState("");
 
-  const handleTextChange = (e) => {
-    const parsed = new Date(e.target.value);
-    setValue(e.target.value);
-    if (!isNaN(parsed.getTime())) {
-      setDate(parsed);
-      setMonth(parsed);
-      onChange({ target: { name, value: parsed.toISOString().split("T")[0] } });
-    } else {
-      setDate(undefined);
-      onChange({ target: { name, value: e.target.value } });
-    }
-  };
-
   const handleCalendarSelect = (selected) => {
+    if (!selected) return;
+
     setDate(selected);
     setValue(formatDate(selected));
     setOpen(false);
@@ -54,9 +43,10 @@ export function DatePickerInput({ id, name, onChange, "aria-invalid": ariaInvali
         value={value}
         placeholder="01 janvier 1990"
         aria-invalid={ariaInvalid}
-        onChange={handleTextChange}
+        readOnly
+        onClick={() => setOpen(true)}
         onKeyDown={(e) => {
-          if (e.key === "ArrowDown") {
+          if (e.key === "ArrowDown" || e.key === "Enter" || e.key === " ") {
             e.preventDefault();
             setOpen(true);
           }
