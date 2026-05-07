@@ -22,6 +22,7 @@ import {
 import { DatePickerInput } from "@/components/ui/date-picker";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import rickrollUrl from "../assets/rickroll.mp4";
 
 const initialState = {
   lastName: "",
@@ -69,7 +70,7 @@ function RegistrationForm() {
       <div data-testid="success" className="fixed inset-0 z-50 bg-black">
         <video
           ref={videoRef}
-          src={`${import.meta.env.BASE_URL}rickroll.mp4`}
+          src={rickrollUrl}
           autoPlay
           playsInline
           className="w-full h-full"
