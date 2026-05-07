@@ -4,7 +4,9 @@ import RegistrationForm from "./RegistrationForm";
 const selectBirthDate = (date) => {
   const [year, month] = date.split("-");
 
-  fireEvent.click(screen.getByRole("button", { name: "Sélectionner une date" }));
+  fireEvent.click(
+    screen.getByRole("button", { name: "Sélectionner une date" }),
+  );
   fireEvent.change(screen.getByLabelText("Choose the Year"), {
     target: { value: year },
   });
