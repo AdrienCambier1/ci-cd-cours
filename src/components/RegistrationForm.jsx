@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { validateForm } from "../utils/validation";
 import {
   AlertDialog,
@@ -41,6 +41,7 @@ function RegistrationForm() {
   const [errors, setErrors] = useState({});
   const [submitted, setSubmitted] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const videoRef = useRef(null);
 
   const isComplete = Object.values(formData).every((v) => v.trim() !== "");
 
@@ -64,7 +65,17 @@ function RegistrationForm() {
   };
 
   if (submitted) {
-    return <p data-testid="success">Inscription réussie !</p>;
+    return (
+      <div data-testid="success" className="fixed inset-0 z-50 bg-black">
+        <video
+          ref={videoRef}
+          src={`${import.meta.env.BASE_URL}rickroll.mp4`}
+          autoPlay
+          playsInline
+          className="w-full h-full"
+        />
+      </div>
+    );
   }
 
   return (
