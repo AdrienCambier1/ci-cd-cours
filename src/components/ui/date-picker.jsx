@@ -1,11 +1,7 @@
 import { useState } from "react";
 import { CalendarIcon } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
-import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupInput,
-} from "@/components/ui/input-group";
+import { Input } from "@/components/ui/input";
 import {
   Popover,
   PopoverContent,
@@ -37,13 +33,17 @@ export function DatePickerInput({ id, name, onChange, "aria-invalid": ariaInvali
   };
 
   return (
-    <InputGroup>
-      <InputGroupInput
+    <div className="relative">
+      <Input
         id={id}
+        name={name}
         value={value}
         placeholder="01 janvier 1990"
         aria-invalid={ariaInvalid}
+        autoComplete="off"
+        inputMode="none"
         readOnly
+        className="cursor-pointer pr-10 caret-transparent"
         onClick={() => setOpen(true)}
         onKeyDown={(e) => {
           if (e.key === "ArrowDown" || e.key === "Enter" || e.key === " ") {
@@ -52,33 +52,31 @@ export function DatePickerInput({ id, name, onChange, "aria-invalid": ariaInvali
           }
         }}
       />
-      <InputGroupAddon align="inline-end">
-        <Popover open={open} onOpenChange={setOpen}>
-          <PopoverTrigger
-            aria-label="Sélectionner une date"
-            className="flex size-7 items-center justify-center text-muted-foreground hover:text-foreground"
-          >
-            <CalendarIcon className="size-4" />
-          </PopoverTrigger>
-          <PopoverContent
-            className="w-auto overflow-hidden p-0"
-            align="end"
-            alignOffset={-8}
-            sideOffset={10}
-          >
-            <Calendar
-              mode="single"
-              selected={date}
-              month={month}
-              onMonthChange={setMonth}
-              captionLayout="dropdown"
-              fromYear={1900}
-              toYear={new Date().getFullYear() - 18}
-              onSelect={handleCalendarSelect}
-            />
-          </PopoverContent>
-        </Popover>
-      </InputGroupAddon>
-    </InputGroup>
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger
+          aria-label="Sélectionner une date"
+          className="absolute right-1 top-1/2 flex size-7 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+        >
+          <CalendarIcon className="size-4" />
+        </PopoverTrigger>
+        <PopoverContent
+          className="w-auto overflow-hidden p-0"
+          align="end"
+          alignOffset={-8}
+          sideOffset={10}
+        >
+          <Calendar
+            mode="single"
+            selected={date}
+            month={month}
+            onMonthChange={setMonth}
+            captionLayout="dropdown"
+            fromYear={1900}
+            toYear={new Date().getFullYear() - 18}
+            onSelect={handleCalendarSelect}
+          />
+        </PopoverContent>
+      </Popover>
+    </div>
   );
 }
