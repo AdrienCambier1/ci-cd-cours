@@ -2,103 +2,165 @@
  * Validates a name (last name or first name).
  * Minimum 2 characters.
  * @param {string} value
- * @returns {{ valid: boolean, error: string }}
+ * @returns {string} Trimmed valid name.
+ * @throws {Error} When the name is invalid.
  */
 export function validateName(value) {
   if (!value || value.trim().length === 0) {
-    return { valid: false, error: "Ce champ est requis" };
+    throw new Error("Ce champ est requis");
   }
-  if (value.trim().length < 2) {
-    return { valid: false, error: "Minimum 2 caractères" };
+
+  const trimmedValue = value.trim();
+  if (trimmedValue.length < 2) {
+    throw new Error("Minimum 2 caractères");
   }
-  if (!/^[a-zA-ZÀ-ÿ\s\-']+$/.test(value.trim())) {
-    return { valid: false, error: "Caractères invalides" };
+  if (!/^[\p{L}\s'-]+$/u.test(trimmedValue)) {
+    throw new Error("Caractères invalides");
   }
-  return { valid: true, error: "" };
+
+  return trimmedValue;
 }
 
 /**
  * Validates an email address.
  * @param {string} value
- * @returns {{ valid: boolean, error: string }}
+ * @returns {string} Trimmed valid email.
+ * @throws {Error} When the email is invalid.
  */
 export function validateEmail(value) {
   if (!value || value.trim().length === 0) {
-    return { valid: false, error: "L'email est requis" };
+    throw new Error("L'email est requis");
   }
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim())) {
-    return { valid: false, error: "Email invalide" };
+
+  const trimmedValue = value.trim();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedValue)) {
+    throw new Error("Email invalide");
   }
-  return { valid: true, error: "" };
+
+  return trimmedValue;
 }
 
 /**
  * Validates a birth date. The person must be at least 18 years old.
  * @param {string} value - ISO date string (YYYY-MM-DD)
- * @param {Date} [today=new Date()] - Reference date for age calculation (injectable for testing)
- * @returns {{ valid: boolean, error: string }}
+ * @returns {string} Valid ISO date string.
+ * @throws {Error} When the birth date is invalid.
  */
-export function validateBirthDate(value, today = new Date()) {
+export function validateBirthDate(value) {
   if (!value) {
-    return { valid: false, error: "La date de naissance est requise" };
+    throw new Error("La date de naissance est requise");
   }
+
   const date = new Date(value);
   if (isNaN(date.getTime())) {
-    return { valid: false, error: "Date invalide" };
+    throw new Error("Date invalide");
   }
-  const minDate = new Date(today);
-  minDate.setFullYear(today.getFullYear() - 18);
+
+  const minDate = new Date();
+  minDate.setFullYear(minDate.getFullYear() - 18);
   if (date > minDate) {
-    return { valid: false, error: "Vous devez avoir au moins 18 ans" };
+    throw new Error("Vous devez avoir au moins 18 ans");
   }
-  return { valid: true, error: "" };
+
+  return value;
 }
 
 /**
  * Validates a French postal code (5 digits).
  * @param {string} value
- * @returns {{ valid: boolean, error: string }}
+ * @returns {string} Trimmed valid postal code.
+ * @throws {Error} When the postal code is invalid.
  */
 export function validatePostalCode(value) {
   if (!value || value.trim().length === 0) {
-    return { valid: false, error: "Le code postal est requis" };
+    throw new Error("Le code postal est requis");
   }
-  if (!/^\d{5}$/.test(value.trim())) {
-    return { valid: false, error: "Format invalide (5 chiffres requis)" };
+
+  const trimmedValue = value.trim();
+  if (!/^\d{5}$/.test(trimmedValue)) {
+    throw new Error("Format invalide (5 chiffres requis)");
   }
-  return { valid: true, error: "" };
+
+  return trimmedValue;
 }
 
 /**
  * Validates a city name.
  * @param {string} value
- * @returns {{ valid: boolean, error: string }}
+ * @returns {string} Trimmed valid city.
+ * @throws {Error} When the city is invalid.
  */
 export function validateCity(value) {
   if (!value || value.trim().length === 0) {
-    return { valid: false, error: "La ville est requise" };
+    throw new Error("La ville est requise");
   }
-  if (!/^[a-zA-ZÀ-ÿ\s\-']+$/.test(value.trim())) {
-    return { valid: false, error: "Caractères invalides" };
+
+  const trimmedValue = value.trim();
+  if (!/^[\p{L}\s'-]+$/u.test(trimmedValue)) {
+    throw new Error("Caractères invalides");
   }
-  return { valid: true, error: "" };
+
+  return trimmedValue;
 }
 
 /**
  * Validates a complete registration form.
  * @param {{ lastName: string, firstName: string, email: string, birthDate: string, city: string, postalCode: string }} data
- * @param {Date} [today=new Date()]
- * @returns {{ valid: boolean, errors: { lastName: string, firstName: string, email: string, birthDate: string, city: string, postalCode: string } }}
+ * @returns {{ lastName: string, firstName: string, email: string, birthDate: string, city: string, postalCode: string }} Valid form data.
+ * @throws {Error} When at least one field is invalid. The thrown error includes an errors object.
  */
-export function validateForm(data, today = new Date()) {
+export function validateForm(data) {
   const errors = {
-    lastName: validateName(data.lastName).error,
-    firstName: validateName(data.firstName).error,
-    email: validateEmail(data.email).error,
-    birthDate: validateBirthDate(data.birthDate, today).error,
-    city: validateCity(data.city).error,
-    postalCode: validatePostalCode(data.postalCode).error,
+    lastName: "",
+    firstName: "",
+    email: "",
+    birthDate: "",
+    city: "",
+    postalCode: "",
   };
-  const valid = Object.values(errors).every((e) => e === "");
-  return { valid, errors };
+  const validatedData = {};
+
+  try {
+    validatedData.lastName = validateName(data.lastName);
+  } catch (error) {
+    errors.lastName = error.message;
+  }
+
+  try {
+    validatedData.firstName = validateName(data.firstName);
+  } catch (error) {
+    errors.firstName = error.message;
+  }
+
+  try {
+    validatedData.email = validateEmail(data.email);
+  } catch (error) {
+    errors.email = error.message;
+  }
+
+  try {
+    validatedData.birthDate = validateBirthDate(data.birthDate);
+  } catch (error) {
+    errors.birthDate = error.message;
+  }
+
+  try {
+    validatedData.city = validateCity(data.city);
+  } catch (error) {
+    errors.city = error.message;
+  }
+
+  try {
+    validatedData.postalCode = validatePostalCode(data.postalCode);
+  } catch (error) {
+    errors.postalCode = error.message;
+  }
+
+  if (Object.values(errors).some((error) => error !== "")) {
+    const error = new Error("Formulaire invalide");
+    error.errors = errors;
+    throw error;
+  }
+
+  return validatedData;
 }

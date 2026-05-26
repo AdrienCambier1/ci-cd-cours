@@ -53,10 +53,12 @@ function RegistrationForm() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    const { valid, errors: validationErrors } = validateForm(formData);
-    setErrors(validationErrors);
-    if (valid) {
+    try {
+      validateForm(formData);
+      setErrors({});
       setDialogOpen(true);
+    } catch (error) {
+      setErrors(error.errors);
     }
   };
 
