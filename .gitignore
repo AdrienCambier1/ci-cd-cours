@@ -13,6 +13,7 @@ dist-ssr
 coverage
 docs
 public/docs
+/lib/
 *.local
 
 # Editor directories and files
