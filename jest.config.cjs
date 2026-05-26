@@ -4,6 +4,7 @@
   transform: {
     "^.+\\.[jt]sx?$": "babel-jest",
   },
+  testPathIgnorePatterns: ["/node_modules/", "/dist/"],
   moduleNameMapper: {
     "^@/(.*)$": "<rootDir>/src/$1",
     "\\.(mp4|webm|ogg|mp3|wav|jpg|jpeg|png|gif|svg)$":
