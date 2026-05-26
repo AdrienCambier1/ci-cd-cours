@@ -10,7 +10,7 @@ jobs:
   build_test:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
 
     strategy:
       matrix:
@@ -37,49 +37,46 @@ jobs:
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
-      - name: Check npm package version
-        id: npm-version
+      - name: Authenticate with npm
+        run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
+
+      - name: Build and publish package on NPM
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
-          PACKAGE_NAME=$(node -p "require('./package.json').name")
+          git config --global user.email "adriencambier04@gmail.com"
+          git config --global user.name "Adrien Cambier"
+
+          npm run build-npm-ci
+          npm version patch
+
           LOCAL_VERSION=$(node -p "require('./package.json').version")
-          PUBLISHED_VERSION=$(npm view "$PACKAGE_NAME@$LOCAL_VERSION" version --silent 2>/dev/null || true)
+          REMOTE_VERSION=$(npm view ci-cd-cours version || echo "")
 
-          echo "package_name=$PACKAGE_NAME" >> "$GITHUB_OUTPUT"
-          echo "local_version=$LOCAL_VERSION" >> "$GITHUB_OUTPUT"
-          echo "published_version=$PUBLISHED_VERSION" >> "$GITHUB_OUTPUT"
-
-          if [ "$PUBLISHED_VERSION" != "$LOCAL_VERSION" ]; then
-            echo "should_publish=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "should_publish=false" >> "$GITHUB_OUTPUT"
+          if [ "$REMOTE_VERSION" != "$LOCAL_VERSION" ]; then
+            npm publish
           fi
+
+          git add .
+          git commit -m "updated version"
+          git push
+
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Setup Pages
         id: pages
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: actions/configure-pages@v3
 
       - name: Upload artifact
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: actions/upload-pages-artifact@v3
         with:
           path: dist
           if-no-files-found: error
 
-      - name: Build and publish package on NPM
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && steps.npm-version.outputs.should_publish == 'true'
-        run: |
-          npm run build-npm-ci
-          npm publish
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
   deploy:
     runs-on: ubuntu-latest
 
     needs: build_test
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
 
     environment:
       name: github-pages
