@@ -40,7 +40,7 @@ jobs:
       - name: Authenticate with npm
         run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
 
-      - name: build and publish package on NPM
+      - name: Build and publish package on NPM
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
           git config --global user.email "adriencambier04@gmail.com"
