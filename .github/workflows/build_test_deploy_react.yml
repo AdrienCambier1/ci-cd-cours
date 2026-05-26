@@ -9,6 +9,8 @@ on:
 jobs:
   build_test:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     strategy:
       matrix:
@@ -21,6 +23,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
+          registry-url: https://registry.npmjs.org/
 
       - name: npm ci, build and test
         run: |
@@ -35,6 +38,7 @@ jobs:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
       - name: Build and publish package on NPM
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
           git config --global user.email "adriencambier04@gmail.com"
           git config --global user.name "Adrien Cambier"
@@ -45,7 +49,7 @@ jobs:
           git commit -m "updated version"
           git push
         env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Setup Pages
         id: pages
