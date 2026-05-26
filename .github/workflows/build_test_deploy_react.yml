@@ -43,19 +43,15 @@ jobs:
       - name: Build and publish package on NPM
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
-          git config --global user.email "adriencambier04@gmail.com"
-          git config --global user.name "Adrien Cambier"
-
           LOCAL_VERSION=$(node -p "require('./package.json').version")
-          REMOTE_VERSION=$(npm view ci-cd-cours version || echo "")
+          REMOTE_VERSION=$(npm view ci-cd-cours@$LOCAL_VERSION version 2>/dev/null || echo "")
 
           if [ "$REMOTE_VERSION" != "$LOCAL_VERSION" ]; then
             npm run build-npm-ci
             npm publish
+          else
+            echo "Version $LOCAL_VERSION already exists on npm. Skipping publish."
           fi
-
-          git push --follow-tags
-
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
