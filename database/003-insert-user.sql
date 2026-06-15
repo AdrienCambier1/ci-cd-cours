@@ -1,6 +1,6 @@
 INSERT INTO users (
-    nom,
-    prenom,
+    last_name,
+    first_name,
     email,
     birthdate,
     city,
