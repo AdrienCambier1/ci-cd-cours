@@ -15,6 +15,7 @@ docs
 public/docs
 /lib/
 *.local
+.env
 
 # Editor directories and files
 .vscode/*
