@@ -12,7 +12,9 @@ services:
       test: 'mysql -u root -p${MYSQL_ROOT_PASSWORD} -e "SHOW DATABASES;"'
 
   api:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
     restart: always
     env_file:
       - .env
@@ -35,15 +37,18 @@ services:
     healthcheck:
       test: 'php -r "file_get_contents(''http://localhost:8080'');"'
 
-  test_site:
-    image: nginx:alpine
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    restart: always
     depends_on:
-      db:
-        condition: service_healthy
       api:
         condition: service_healthy
-      adminer:
-        condition: service_healthy
+    ports:
+      - "80:80"
+    healthcheck:
+      test: "wget -q -O /dev/null http://localhost:80"
 
 volumes:
   db_data:
