@@ -37,7 +37,7 @@ const initialState = {
  * Registration form component.
  * Validates all fields on submit and saves valid data to localStorage.
  */
-function RegistrationForm() {
+function LoginForm() {
   const [formData, setFormData] = useState(initialState);
   const [errors, setErrors] = useState({});
   const [submitted, setSubmitted] = useState(false);
@@ -95,16 +95,16 @@ function RegistrationForm() {
       {/* Form to fill with required informations */}
       <Card className="w-full max-w-sm">
         <CardHeader>
-          <CardTitle>Créer un compte</CardTitle>
+          <CardTitle>Se connecter</CardTitle>
           <CardDescription>
-            Remplissez le formulaire pour vous inscrire.
+            Remplissez le formulaire pour vous connecter.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form
-            id="registration-form"
+            id="login-form"
             onSubmit={handleSubmit}
-            aria-label="Formulaire d'inscription"
+            aria-label="Formulaire de connexion"
           >
             <div className="flex flex-col gap-6">
               <div className="grid grid-cols-2 gap-3">
@@ -238,11 +238,11 @@ function RegistrationForm() {
         <CardFooter>
           <Button
             type="submit"
-            form="registration-form"
+            form="login-form"
             className="w-full"
             disabled={!isComplete}
           >
-            S&apos;inscrire
+            Se connecter
           </Button>
         </CardFooter>
       </Card>
@@ -251,9 +251,10 @@ function RegistrationForm() {
       <AlertDialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Confirmer l&apos;inscription</AlertDialogTitle>
+            <AlertDialogTitle>Confirmer la connexion</AlertDialogTitle>
             <AlertDialogDescription>
-              Vos informations seront enregistrées. Voulez-vous continuer ?
+              Vos informations seront utilisées pour vous connecter. Voulez-vous
+              continuer ?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -268,4 +269,4 @@ function RegistrationForm() {
   );
 }
 
-export default RegistrationForm;
+export default LoginForm;

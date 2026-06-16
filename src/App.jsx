@@ -1,26 +1,17 @@
-import { useEffect, useState } from "react";
-import RegistrationForm from "./components/registrationForm";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import Dashboard from "./pages/dashboard";
+import Login from "./pages/login";
 
 function App() {
-  const [usersCount, setUsersCount] = useState(0);
-
-  useEffect(() => {
-    if (!globalThis.fetch) {
-      return;
-    }
-
-    fetch("http://localhost:8000/users")
-      .then((response) => response.json())
-      .then((data) => setUsersCount(data.users.length));
-  }, []);
-
   return (
-    <div className="w-full h-full flex flex-col items-center justify-center gap-4">
-      <p className="text-sm text-muted-foreground">
-        Utilisateurs: {usersCount}
-      </p>
-      <RegistrationForm />
-    </div>
+    <BrowserRouter basename="/ci-cd-cours">
+      <Routes>
+        <Route path="/" element={<Navigate to="/login" replace />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="*" element={<Navigate to="/login" replace />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
 

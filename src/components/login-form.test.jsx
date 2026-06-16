@@ -1,5 +1,5 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
-import RegistrationForm from "./registrationForm";
+import LoginForm from "./login-form";
 
 const selectBirthDate = (date) => {
   const [year, month] = date.split("-");
@@ -40,7 +40,7 @@ const fillValidForm = () => {
   });
 };
 
-describe("RegistrationForm Integration Test Suites", () => {
+describe("LoginForm Integration Test Suites", () => {
   beforeEach(() => {
     localStorage.clear();
     globalThis.fetch = jest.fn(() =>
@@ -60,7 +60,7 @@ describe("RegistrationForm Integration Test Suites", () => {
   });
 
   it("should render all form fields and the submit button", () => {
-    render(<RegistrationForm />);
+    render(<LoginForm />);
     expect(screen.getByLabelText("Nom")).toBeInTheDocument();
     expect(screen.getByLabelText("Prénom")).toBeInTheDocument();
     expect(screen.getByLabelText("Email")).toBeInTheDocument();
@@ -68,12 +68,12 @@ describe("RegistrationForm Integration Test Suites", () => {
     expect(screen.getByLabelText("Ville")).toBeInTheDocument();
     expect(screen.getByLabelText("Code postal")).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: "S'inscrire" }),
+      screen.getByRole("button", { name: "Se connecter" }),
     ).toBeInTheDocument();
   });
 
   it("should show all validation errors on empty submit", () => {
-    render(<RegistrationForm />);
+    render(<LoginForm />);
     fireEvent.submit(screen.getByRole("form"));
     expect(screen.getByTestId("error-lastName")).toBeInTheDocument();
     expect(screen.getByTestId("error-firstName")).toBeInTheDocument();
@@ -84,16 +84,16 @@ describe("RegistrationForm Integration Test Suites", () => {
   });
 
   it("should update field value on change", () => {
-    render(<RegistrationForm />);
+    render(<LoginForm />);
     const input = screen.getByLabelText("Nom");
     fireEvent.change(input, { target: { value: "Martin" } });
     expect(input.value).toBe("Martin");
   });
 
   it("should save to localStorage and show success message on valid submit", async () => {
-    render(<RegistrationForm />);
+    render(<LoginForm />);
     fillValidForm();
-    fireEvent.click(screen.getByRole("button", { name: "S'inscrire" }));
+    fireEvent.click(screen.getByRole("button", { name: "Se connecter" }));
     fireEvent.click(screen.getByRole("button", { name: "Confirmer" }));
 
     await waitFor(() => {
@@ -127,7 +127,7 @@ describe("RegistrationForm Integration Test Suites", () => {
   });
 
   it("should prevent typing directly in the birth date field", () => {
-    render(<RegistrationForm />);
+    render(<LoginForm />);
     const birthDateInput = screen.getByLabelText("Date de naissance");
 
     expect(birthDateInput).toHaveAttribute("readonly");
