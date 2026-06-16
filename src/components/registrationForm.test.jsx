@@ -100,20 +100,23 @@ describe("RegistrationForm Integration Test Suites", () => {
       expect(screen.getByTestId("success")).toBeInTheDocument();
     });
 
-    expect(globalThis.fetch).toHaveBeenCalledWith("http://localhost:8000/users", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      "http://localhost:8000/users",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          lastName: "Dupont",
+          firstName: "Jean",
+          email: "jean@example.com",
+          birthDate: "1990-01-01",
+          city: "Paris",
+          postalCode: "75001",
+        }),
       },
-      body: JSON.stringify({
-        lastName: "Dupont",
-        firstName: "Jean",
-        email: "jean@example.com",
-        birthDate: "1990-01-01",
-        city: "Paris",
-        postalCode: "75001",
-      }),
-    });
+    );
 
     const stored = JSON.parse(localStorage.getItem("registrationData"));
     expect(stored.lastName).toBe("Dupont");
