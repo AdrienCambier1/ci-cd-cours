@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import RegistrationForm from "./registrationForm";
 
 const selectBirthDate = (date) => {
@@ -43,6 +43,20 @@ const fillValidForm = () => {
 describe("RegistrationForm Integration Test Suites", () => {
   beforeEach(() => {
     localStorage.clear();
+    global.fetch = jest.fn(() =>
+      Promise.resolve({
+        json: () =>
+          Promise.resolve({
+            user: {
+              lastName: "Dupont",
+              firstName: "Jean",
+              email: "jean@example.com",
+              city: "Paris",
+              postalCode: "75001",
+            },
+          }),
+      }),
+    );
   });
 
   it("should render all form fields and the submit button", () => {
@@ -76,12 +90,31 @@ describe("RegistrationForm Integration Test Suites", () => {
     expect(input.value).toBe("Martin");
   });
 
-  it("should save to localStorage and show success message on valid submit", () => {
+  it("should save to localStorage and show success message on valid submit", async () => {
     render(<RegistrationForm />);
     fillValidForm();
     fireEvent.click(screen.getByRole("button", { name: "S'inscrire" }));
     fireEvent.click(screen.getByRole("button", { name: "Confirmer" }));
-    expect(screen.getByTestId("success")).toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(screen.getByTestId("success")).toBeInTheDocument();
+    });
+
+    expect(fetch).toHaveBeenCalledWith("http://localhost:8000/users", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        lastName: "Dupont",
+        firstName: "Jean",
+        email: "jean@example.com",
+        birthDate: "1990-01-01",
+        city: "Paris",
+        postalCode: "75001",
+      }),
+    });
+
     const stored = JSON.parse(localStorage.getItem("registrationData"));
     expect(stored.lastName).toBe("Dupont");
     expect(stored.firstName).toBe("Jean");

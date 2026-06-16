@@ -17,6 +17,14 @@ function formatDate(date) {
   });
 }
 
+function formatDateValue(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
+
 export function DatePickerInput({ id, name, onChange, "aria-invalid": ariaInvalid }) {
   const [open, setOpen] = useState(false);
   const [date, setDate] = useState(undefined);
@@ -29,7 +37,7 @@ export function DatePickerInput({ id, name, onChange, "aria-invalid": ariaInvali
     setDate(selected);
     setValue(formatDate(selected));
     setOpen(false);
-    onChange({ target: { name, value: selected.toISOString().split("T")[0] } });
+    onChange({ target: { name, value: formatDateValue(selected) } });
   };
 
   return (

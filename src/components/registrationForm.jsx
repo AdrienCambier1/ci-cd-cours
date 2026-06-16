@@ -62,8 +62,17 @@ function RegistrationForm() {
     }
   };
 
-  const handleConfirm = () => {
-    localStorage.setItem("registrationData", JSON.stringify(formData));
+  const handleConfirm = async () => {
+    const response = await fetch("http://localhost:8000/users", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(formData),
+    });
+    const data = await response.json();
+
+    localStorage.setItem("registrationData", JSON.stringify(data.user));
     setSubmitted(true);
   };
 

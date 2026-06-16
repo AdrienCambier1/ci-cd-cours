@@ -31,3 +31,46 @@ async def get_users():
             records = cursor.fetchall()
 
     return {"users": records}
+
+@app.post("/users")
+async def create_user(user: dict):
+    with get_connection() as conn:
+        with conn.cursor(dictionary=True) as cursor:
+            cursor.execute(
+                """
+                INSERT INTO users (
+                    last_name,
+                    first_name,
+                    email,
+                    birthdate,
+                    city,
+                    postal_code
+                )
+                SELECT
+                    %s,
+                    %s,
+                    %s,
+                    %s,
+                    %s,
+                    %s
+                WHERE NOT EXISTS (
+                    SELECT 1
+                    FROM users
+                    WHERE email = %s
+                )
+                """,
+                (
+                    user["lastName"],
+                    user["firstName"],
+                    user["email"],
+                    user["birthDate"],
+                    user["city"],
+                    user["postalCode"],
+                    user["email"],
+                ),
+            )
+            conn.commit()
+            cursor.execute("SELECT * FROM users WHERE email = %s", (user["email"],))
+            created_user = cursor.fetchone()
+
+    return {"user": created_user}
