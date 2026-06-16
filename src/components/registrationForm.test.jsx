@@ -43,7 +43,7 @@ const fillValidForm = () => {
 describe("RegistrationForm Integration Test Suites", () => {
   beforeEach(() => {
     localStorage.clear();
-    global.fetch = jest.fn(() =>
+    globalThis.fetch = jest.fn(() =>
       Promise.resolve({
         json: () =>
           Promise.resolve({
@@ -100,7 +100,7 @@ describe("RegistrationForm Integration Test Suites", () => {
       expect(screen.getByTestId("success")).toBeInTheDocument();
     });
 
-    expect(fetch).toHaveBeenCalledWith("http://localhost:8000/users", {
+    expect(globalThis.fetch).toHaveBeenCalledWith("http://localhost:8000/users", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
