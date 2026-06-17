@@ -1,15 +1,5 @@
-import { useRef, useState } from "react";
-import { validateForm } from "../utils/validation";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -19,30 +9,21 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { DatePickerInput } from "@/components/ui/date-picker";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import rickrollUrl from "../assets/rickroll.mp4";
 
 const initialState = {
-  lastName: "",
-  firstName: "",
-  email: "",
-  birthDate: "",
-  city: "",
-  postalCode: "",
+  username: "",
+  password: "",
 };
 
-/**
- * Registration form component.
- * Validates all fields on submit and saves valid data to localStorage.
- */
-function LoginForm() {
+function LoginForm({
+  authUsername = process.env.AUTH_USERNAME,
+  authPassword = process.env.AUTH_PASSWORD,
+}) {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState(initialState);
-  const [errors, setErrors] = useState({});
-  const [submitted, setSubmitted] = useState(false);
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const videoRef = useRef(null);
+  const [error, setError] = useState("");
 
   const isComplete = Object.values(formData).every((v) => v.trim() !== "");
 
@@ -53,219 +34,79 @@ function LoginForm() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    try {
-      validateForm(formData);
-      setErrors({});
-      setDialogOpen(true);
-    } catch (error) {
-      setErrors(error.errors);
+
+    if (
+      formData.username === authUsername &&
+      formData.password === authPassword
+    ) {
+      setError("");
+      navigate("/dashboard");
+      return;
     }
+
+    setError("Identifiants invalides");
   };
-
-  const handleConfirm = async () => {
-    const response = await fetch("http://localhost:8000/users", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(formData),
-    });
-    const data = await response.json();
-
-    localStorage.setItem("registrationData", JSON.stringify(data.user));
-    setSubmitted(true);
-  };
-
-  if (submitted) {
-    return (
-      <div data-testid="success" className="fixed inset-0 z-50 bg-black">
-        <video
-          ref={videoRef}
-          src={rickrollUrl}
-          autoPlay
-          playsInline
-          className="w-full h-full"
-        />
-      </div>
-    );
-  }
 
   return (
-    <>
-      {/* Form to fill with required informations */}
-      <Card className="w-full max-w-sm">
-        <CardHeader>
-          <CardTitle>Se connecter</CardTitle>
-          <CardDescription>
-            Remplissez le formulaire pour vous connecter.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form
-            id="login-form"
-            onSubmit={handleSubmit}
-            aria-label="Formulaire de connexion"
-          >
-            <div className="flex flex-col gap-6">
-              <div className="grid grid-cols-2 gap-3">
-                <div className="grid gap-2">
-                  <Label htmlFor="lastName">Nom</Label>
-                  <Input
-                    id="lastName"
-                    name="lastName"
-                    type="text"
-                    placeholder="Dupont"
-                    value={formData.lastName}
-                    onChange={handleChange}
-                    aria-invalid={!!errors.lastName}
-                  />
-                  {errors.lastName && (
-                    <span
-                      data-testid="error-lastName"
-                      className="text-xs text-destructive"
-                    >
-                      {errors.lastName}
-                    </span>
-                  )}
-                </div>
-
-                <div className="grid gap-2">
-                  <Label htmlFor="firstName">Prénom</Label>
-                  <Input
-                    id="firstName"
-                    name="firstName"
-                    type="text"
-                    placeholder="Jean"
-                    value={formData.firstName}
-                    onChange={handleChange}
-                    aria-invalid={!!errors.firstName}
-                  />
-                  {errors.firstName && (
-                    <span
-                      data-testid="error-firstName"
-                      className="text-xs text-destructive"
-                    >
-                      {errors.firstName}
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              <div className="grid gap-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  name="email"
-                  type="email"
-                  placeholder="jean.dupont@example.com"
-                  value={formData.email}
-                  onChange={handleChange}
-                  aria-invalid={!!errors.email}
-                />
-                {errors.email && (
-                  <span
-                    data-testid="error-email"
-                    className="text-xs text-destructive"
-                  >
-                    {errors.email}
-                  </span>
-                )}
-              </div>
-
-              <div className="grid gap-2">
-                <Label htmlFor="birthDate">Date de naissance</Label>
-                <DatePickerInput
-                  id="birthDate"
-                  name="birthDate"
-                  onChange={handleChange}
-                  aria-invalid={!!errors.birthDate}
-                />
-                {errors.birthDate && (
-                  <span
-                    data-testid="error-birthDate"
-                    className="text-xs text-destructive"
-                  >
-                    {errors.birthDate}
-                  </span>
-                )}
-              </div>
-
-              <div className="grid gap-2">
-                <Label htmlFor="city">Ville</Label>
-                <Input
-                  id="city"
-                  name="city"
-                  type="text"
-                  placeholder="Paris"
-                  value={formData.city}
-                  onChange={handleChange}
-                  aria-invalid={!!errors.city}
-                />
-                {errors.city && (
-                  <span
-                    data-testid="error-city"
-                    className="text-xs text-destructive"
-                  >
-                    {errors.city}
-                  </span>
-                )}
-              </div>
-
-              <div className="grid gap-2">
-                <Label htmlFor="postalCode">Code postal</Label>
-                <Input
-                  id="postalCode"
-                  name="postalCode"
-                  type="text"
-                  placeholder="75001"
-                  maxLength={5}
-                  value={formData.postalCode}
-                  onChange={handleChange}
-                  aria-invalid={!!errors.postalCode}
-                />
-                {errors.postalCode && (
-                  <span
-                    data-testid="error-postalCode"
-                    className="text-xs text-destructive"
-                  >
-                    {errors.postalCode}
-                  </span>
-                )}
-              </div>
+    <Card className="w-full max-w-sm">
+      <CardHeader>
+        <CardTitle>Se connecter</CardTitle>
+        <CardDescription>
+          Entrez vos identifiants pour acceder au dashboard.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <form
+          id="login-form"
+          onSubmit={handleSubmit}
+          aria-label="Formulaire de connexion"
+        >
+          <div className="flex flex-col gap-6">
+            <div className="grid gap-2">
+              <Label htmlFor="username">Utilisateur</Label>
+              <Input
+                id="username"
+                name="username"
+                type="text"
+                autoComplete="username"
+                value={formData.username}
+                onChange={handleChange}
+                aria-invalid={!!error}
+              />
             </div>
-          </form>
-        </CardContent>
-        <CardFooter>
-          <Button
-            type="submit"
-            form="login-form"
-            className="w-full"
-            disabled={!isComplete}
-          >
-            Se connecter
-          </Button>
-        </CardFooter>
-      </Card>
 
-      {/* This dialog is displayed for form validation */}
-      <AlertDialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Confirmer la connexion</AlertDialogTitle>
-            <AlertDialogDescription>
-              Vos informations seront utilisées pour vous connecter. Voulez-vous
-              continuer ?
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirm}>
-              Confirmer
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </>
+            <div className="grid gap-2">
+              <Label htmlFor="password">Mot de passe</Label>
+              <Input
+                id="password"
+                name="password"
+                type="password"
+                autoComplete="current-password"
+                value={formData.password}
+                onChange={handleChange}
+                aria-invalid={!!error}
+              />
+            </div>
+
+            {error && (
+              <p role="alert" className="text-sm text-destructive">
+                {error}
+              </p>
+            )}
+          </div>
+        </form>
+      </CardContent>
+      <CardFooter>
+        <Button
+          type="submit"
+          form="login-form"
+          className="w-full"
+          disabled={!isComplete}
+        >
+          Se connecter
+        </Button>
+      </CardFooter>
+    </Card>
   );
 }
 

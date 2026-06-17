@@ -1,140 +1,34 @@
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import LoginForm from "./login-form";
 
-const selectBirthDate = (date) => {
-  const [year, month] = date.split("-");
+jest.mock("react-router-dom", () => ({
+  useNavigate: () => jest.fn(),
+}));
 
-  fireEvent.click(
-    screen.getByRole("button", { name: "Sélectionner une date" }),
-  );
-  fireEvent.change(screen.getByLabelText("Choose the Year"), {
-    target: { value: year },
-  });
-  fireEvent.change(screen.getByLabelText("Choose the Month"), {
-    target: { value: String(Number(month) - 1) },
-  });
-
-  const dayButton = document.querySelector(
-    `[role="gridcell"][data-day="${date}"] button`,
-  );
-  expect(dayButton).toBeInTheDocument();
-  fireEvent.click(dayButton);
-};
-
-const fillValidForm = () => {
-  fireEvent.change(screen.getByLabelText("Nom"), {
-    target: { value: "Dupont" },
-  });
-  fireEvent.change(screen.getByLabelText("Prénom"), {
-    target: { value: "Jean" },
-  });
-  fireEvent.change(screen.getByLabelText("Email"), {
-    target: { value: "jean@example.com" },
-  });
-  selectBirthDate("1990-01-01");
-  fireEvent.change(screen.getByLabelText("Ville"), {
-    target: { value: "Paris" },
-  });
-  fireEvent.change(screen.getByLabelText("Code postal"), {
-    target: { value: "75001" },
-  });
-};
-
-describe("LoginForm Integration Test Suites", () => {
-  beforeEach(() => {
-    localStorage.clear();
-    globalThis.fetch = jest.fn(() =>
-      Promise.resolve({
-        json: () =>
-          Promise.resolve({
-            user: {
-              lastName: "Dupont",
-              firstName: "Jean",
-              email: "jean@example.com",
-              city: "Paris",
-              postalCode: "75001",
-            },
-          }),
-      }),
-    );
-  });
-
-  it("should render all form fields and the submit button", () => {
+describe("LoginForm", () => {
+  it("renders username, password and submit button", () => {
     render(<LoginForm />);
-    expect(screen.getByLabelText("Nom")).toBeInTheDocument();
-    expect(screen.getByLabelText("Prénom")).toBeInTheDocument();
-    expect(screen.getByLabelText("Email")).toBeInTheDocument();
-    expect(screen.getByLabelText("Date de naissance")).toBeInTheDocument();
-    expect(screen.getByLabelText("Ville")).toBeInTheDocument();
-    expect(screen.getByLabelText("Code postal")).toBeInTheDocument();
+
+    expect(screen.getByLabelText("Utilisateur")).toBeInTheDocument();
+    expect(screen.getByLabelText("Mot de passe")).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: "Se connecter" }),
-    ).toBeInTheDocument();
+    ).toBeDisabled();
   });
 
-  it("should show all validation errors on empty submit", () => {
+  it("updates field values on change", () => {
     render(<LoginForm />);
-    fireEvent.submit(screen.getByRole("form"));
-    expect(screen.getByTestId("error-lastName")).toBeInTheDocument();
-    expect(screen.getByTestId("error-firstName")).toBeInTheDocument();
-    expect(screen.getByTestId("error-email")).toBeInTheDocument();
-    expect(screen.getByTestId("error-birthDate")).toBeInTheDocument();
-    expect(screen.getByTestId("error-city")).toBeInTheDocument();
-    expect(screen.getByTestId("error-postalCode")).toBeInTheDocument();
-  });
 
-  it("should update field value on change", () => {
-    render(<LoginForm />);
-    const input = screen.getByLabelText("Nom");
-    fireEvent.change(input, { target: { value: "Martin" } });
-    expect(input.value).toBe("Martin");
-  });
+    const usernameInput = screen.getByLabelText("Utilisateur");
+    const passwordInput = screen.getByLabelText("Mot de passe");
 
-  it("should save to localStorage and show success message on valid submit", async () => {
-    render(<LoginForm />);
-    fillValidForm();
-    fireEvent.click(screen.getByRole("button", { name: "Se connecter" }));
-    fireEvent.click(screen.getByRole("button", { name: "Confirmer" }));
+    fireEvent.change(usernameInput, { target: { value: "adrien" } });
+    fireEvent.change(passwordInput, { target: { value: "secret" } });
 
-    await waitFor(() => {
-      expect(screen.getByTestId("success")).toBeInTheDocument();
-    });
-
-    expect(globalThis.fetch).toHaveBeenCalledWith(
-      "http://localhost:8000/users",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          lastName: "Dupont",
-          firstName: "Jean",
-          email: "jean@example.com",
-          birthDate: "1990-01-01",
-          city: "Paris",
-          postalCode: "75001",
-        }),
-      },
-    );
-
-    const stored = JSON.parse(localStorage.getItem("registrationData"));
-    expect(stored.lastName).toBe("Dupont");
-    expect(stored.firstName).toBe("Jean");
-    expect(stored.email).toBe("jean@example.com");
-    expect(stored.city).toBe("Paris");
-    expect(stored.postalCode).toBe("75001");
-  });
-
-  it("should prevent typing directly in the birth date field", () => {
-    render(<LoginForm />);
-    const birthDateInput = screen.getByLabelText("Date de naissance");
-
-    expect(birthDateInput).toHaveAttribute("readonly");
-    fireEvent.change(birthDateInput, {
-      target: { value: "2020-01-01" },
-    });
-
-    expect(birthDateInput).toHaveValue("");
+    expect(usernameInput).toHaveValue("adrien");
+    expect(passwordInput).toHaveValue("secret");
+    expect(
+      screen.getByRole("button", { name: "Se connecter" }),
+    ).toBeEnabled();
   });
 });
