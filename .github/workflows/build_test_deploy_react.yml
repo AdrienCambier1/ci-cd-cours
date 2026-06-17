@@ -26,6 +26,9 @@ jobs:
           registry-url: https://registry.npmjs.org/
 
       - name: npm ci, build and test
+        env:
+          AUTH_USERNAME: admin
+          AUTH_PASSWORD: admin
         run: |
           npm ci
           npm run jsdoc

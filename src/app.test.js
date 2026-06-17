@@ -1,9 +1,17 @@
 import { render, screen } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import App from "./app";
+import { setIsAuthenticated } from "./auth";
 import Dashboard from "./pages/dashboard";
+import { queryClient } from "./query-client";
 
 describe("App", () => {
+  beforeEach(() => {
+    queryClient.clear();
+    setIsAuthenticated(false);
+    delete globalThis.fetch;
+  });
+
   it("redirects app root route to login form", () => {
     window.history.pushState({}, "", "/ci-cd-cours/");
 
@@ -20,7 +28,16 @@ describe("App", () => {
     expect(screen.getByRole("form")).toBeInTheDocument();
   });
 
-  it("renders the dashboard route", async () => {
+  it("redirects the dashboard route to login form when not authenticated", () => {
+    window.history.pushState({}, "", "/ci-cd-cours/dashboard");
+
+    render(<App />);
+
+    expect(screen.getByRole("form")).toBeInTheDocument();
+  });
+
+  it("renders the dashboard route when authenticated", async () => {
+    setIsAuthenticated(true);
     globalThis.fetch = jest.fn(() =>
       Promise.resolve({
         ok: true,
@@ -51,7 +68,6 @@ describe("App", () => {
     expect(
       await screen.findByText("jean.dupont@example.com"),
     ).toBeInTheDocument();
-    delete globalThis.fetch;
   });
 
   it("renders dashboard when fetch is not available", () => {

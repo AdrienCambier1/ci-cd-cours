@@ -20,6 +20,7 @@ const initialState = {
 function LoginForm({
   authUsername = process.env.AUTH_USERNAME,
   authPassword = process.env.AUTH_PASSWORD,
+  onLogin,
 }) {
   const navigate = useNavigate();
   const [formData, setFormData] = useState(initialState);
@@ -40,6 +41,7 @@ function LoginForm({
       formData.password === authPassword
     ) {
       setError("");
+      onLogin?.();
       navigate("/dashboard");
       return;
     }

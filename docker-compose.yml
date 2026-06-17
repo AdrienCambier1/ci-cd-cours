@@ -41,6 +41,9 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.frontend
+      args:
+        AUTH_USERNAME: ${AUTH_USERNAME}
+        AUTH_PASSWORD: ${AUTH_PASSWORD}
     restart: always
     depends_on:
       api:
