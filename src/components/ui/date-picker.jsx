@@ -25,17 +25,38 @@ function formatDateValue(date) {
   return `${year}-${month}-${day}`;
 }
 
-export function DatePickerInput({ id, name, onChange, "aria-invalid": ariaInvalid }) {
+function parseDateValue(value) {
+  if (!value) {
+    return undefined;
+  }
+
+  const [year, month, day] = value.split("-").map(Number);
+  const date = new Date(year, month - 1, day);
+
+  if (Number.isNaN(date.getTime())) {
+    return undefined;
+  }
+
+  return date;
+}
+
+export function DatePickerInput({
+  id,
+  name,
+  value = "",
+  onChange,
+  "aria-invalid": ariaInvalid,
+  ...props
+}) {
+  const selectedDate = parseDateValue(value);
+  const displayValue = formatDate(selectedDate);
   const [open, setOpen] = useState(false);
-  const [date, setDate] = useState(undefined);
-  const [month, setMonth] = useState(undefined);
-  const [value, setValue] = useState("");
+  const [month, setMonth] = useState(selectedDate);
 
   const handleCalendarSelect = (selected) => {
     if (!selected) return;
 
-    setDate(selected);
-    setValue(formatDate(selected));
+    setMonth(selected);
     setOpen(false);
     onChange({ target: { name, value: formatDateValue(selected) } });
   };
@@ -45,9 +66,10 @@ export function DatePickerInput({ id, name, onChange, "aria-invalid": ariaInvali
       <Input
         id={id}
         name={name}
-        value={value}
+        value={displayValue}
         placeholder="01 janvier 1990"
         aria-invalid={ariaInvalid}
+        {...props}
         autoComplete="off"
         inputMode="none"
         readOnly
@@ -75,7 +97,7 @@ export function DatePickerInput({ id, name, onChange, "aria-invalid": ariaInvali
         >
           <Calendar
             mode="single"
-            selected={date}
+            selected={selectedDate}
             month={month}
             onMonthChange={setMonth}
             captionLayout="dropdown"

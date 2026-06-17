@@ -1,6 +1,7 @@
 import mysql.connector
 import os
 from fastapi import FastAPI
+from fastapi import HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
@@ -74,3 +75,38 @@ async def create_user(user: dict):
             created_user = cursor.fetchone()
 
     return {"user": created_user}
+
+@app.patch("/users/{user_id}")
+async def update_user(user_id: int, user: dict):
+    with get_connection() as conn:
+        with conn.cursor(dictionary=True) as cursor:
+            cursor.execute(
+                """
+                UPDATE users
+                SET
+                    last_name = %s,
+                    first_name = %s,
+                    email = %s,
+                    birthdate = %s,
+                    city = %s,
+                    postal_code = %s
+                WHERE id = %s
+                """,
+                (
+                    user["lastName"],
+                    user["firstName"],
+                    user["email"],
+                    user["birthDate"],
+                    user["city"],
+                    user["postalCode"],
+                    user_id,
+                ),
+            )
+            conn.commit()
+            cursor.execute("SELECT * FROM users WHERE id = %s", (user_id,))
+            updated_user = cursor.fetchone()
+
+    if not updated_user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    return {"user": updated_user}

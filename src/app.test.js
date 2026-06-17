@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import App from "./app";
 import Dashboard from "./pages/dashboard";
 
@@ -22,6 +23,7 @@ describe("App", () => {
   it("renders the dashboard route", async () => {
     globalThis.fetch = jest.fn(() =>
       Promise.resolve({
+        ok: true,
         json: () =>
           Promise.resolve({
             users: [
@@ -54,8 +56,19 @@ describe("App", () => {
 
   it("renders dashboard when fetch is not available", () => {
     delete globalThis.fetch;
+    const queryClient = new QueryClient({
+      defaultOptions: {
+        queries: {
+          retry: false,
+        },
+      },
+    });
 
-    render(<Dashboard />);
+    render(
+      <QueryClientProvider client={queryClient}>
+        <Dashboard />
+      </QueryClientProvider>,
+    );
 
     expect(
       screen.getByRole("heading", { name: "Dashboard" }),
