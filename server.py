@@ -26,7 +26,7 @@ def get_connection():
 @app.get("/users")
 async def get_users():
     with get_connection() as conn:
-        with conn.cursor() as cursor:
+        with conn.cursor(dictionary=True) as cursor:
             cursor.execute("SELECT * FROM users")
             records = cursor.fetchall()
 

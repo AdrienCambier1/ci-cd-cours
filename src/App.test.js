@@ -1,5 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import App from "./app";
+import Dashboard from "./pages/dashboard";
 
 describe("App", () => {
   it("redirects app root route to login form", () => {
@@ -18,10 +19,41 @@ describe("App", () => {
     expect(screen.getByRole("form")).toBeInTheDocument();
   });
 
-  it("renders the dashboard route", () => {
+  it("renders the dashboard route", async () => {
+    globalThis.fetch = jest.fn(() =>
+      Promise.resolve({
+        json: () =>
+          Promise.resolve({
+            users: [
+              {
+                id: 1,
+                last_name: "Dupont",
+                first_name: "Jean",
+                email: "jean.dupont@example.com",
+                birthdate: "2000-01-15",
+                city: "Paris",
+                postal_code: "75001",
+                created_at: "2026-06-15T13:38:05",
+              },
+            ],
+          }),
+      }),
+    );
     window.history.pushState({}, "", "/ci-cd-cours/dashboard");
 
     render(<App />);
+
+    expect(
+      screen.getByRole("heading", { name: "Dashboard" }),
+    ).toBeInTheDocument();
+    expect(await screen.findByText("jean.dupont@example.com")).toBeInTheDocument();
+    delete globalThis.fetch;
+  });
+
+  it("renders dashboard when fetch is not available", () => {
+    delete globalThis.fetch;
+
+    render(<Dashboard />);
 
     expect(
       screen.getByRole("heading", { name: "Dashboard" }),
