@@ -46,7 +46,9 @@ describe("App", () => {
     expect(
       screen.getByRole("heading", { name: "Dashboard" }),
     ).toBeInTheDocument();
-    expect(await screen.findByText("jean.dupont@example.com")).toBeInTheDocument();
+    expect(
+      await screen.findByText("jean.dupont@example.com"),
+    ).toBeInTheDocument();
     delete globalThis.fetch;
   });
 
