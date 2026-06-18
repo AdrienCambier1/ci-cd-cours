@@ -65,7 +65,7 @@ describe("UsersTable", () => {
     );
 
     expect(screen.getAllByLabelText("Chargement des utilisateurs")).toHaveLength(
-      5,
+      3,
     );
     expect(screen.queryByText("Aucun utilisateur")).not.toBeInTheDocument();
   });

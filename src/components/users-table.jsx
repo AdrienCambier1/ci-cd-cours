@@ -23,6 +23,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
+const tableRowClassName = "h-12";
+const columnWidths = ["13%", "14%", "27%", "18%", "10%", "14%", "4%"];
+
 function UsersTable({
   isDeletingUser,
   isLoading,
@@ -85,7 +88,12 @@ function UsersTable({
   });
 
   return (
-    <Table>
+    <Table className="min-w-[900px] table-fixed">
+      <colgroup>
+        {columnWidths.map((width, index) => (
+          <col key={index} style={{ width }} />
+        ))}
+      </colgroup>
       <TableHeader>
         {table.getHeaderGroups().map((headerGroup) => (
           <TableRow key={headerGroup.id}>
@@ -104,8 +112,12 @@ function UsersTable({
       </TableHeader>
       <TableBody>
         {isLoading ? (
-          Array.from({ length: 5 }).map((_, rowIndex) => (
-            <TableRow key={rowIndex} aria-label="Chargement des utilisateurs">
+          Array.from({ length: 3 }).map((_, rowIndex) => (
+            <TableRow
+              key={rowIndex}
+              aria-label="Chargement des utilisateurs"
+              className={tableRowClassName}
+            >
               {Array.from({ length: columns.length }).map((_, cellIndex) => (
                 <TableCell key={cellIndex}>
                   <Skeleton className="h-8 w-full" />
@@ -115,7 +127,7 @@ function UsersTable({
           ))
         ) : table.getRowModel().rows.length ? (
           table.getRowModel().rows.map((row) => (
-            <TableRow key={row.id}>
+            <TableRow key={row.id} className={tableRowClassName}>
               {row.getVisibleCells().map((cell) => (
                 <TableCell key={cell.id}>
                   {flexRender(cell.column.columnDef.cell, cell.getContext())}
