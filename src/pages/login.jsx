@@ -2,9 +2,11 @@ import LoginForm from "../components/login-form";
 
 function Login({ onLogin }) {
   return (
-    <div className="w-full h-full flex flex-col items-center justify-center gap-4">
-      <LoginForm onLogin={onLogin} />
-    </div>
+    <main className="min-h-full w-full p-6">
+      <div className="mx-auto flex w-full max-w-6xl items-center justify-center">
+        <LoginForm onLogin={onLogin} />
+      </div>
+    </main>
   );
 }
 

@@ -1,18 +1,17 @@
+import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createUser, fetchUsers, updateUser } from "@/api/users";
+import { LogOut } from "lucide-react";
+import { createUser, deleteUser, fetchUsers, updateUser } from "@/api/users";
 import CreateUserDialog from "@/components/create-user-dialog";
+import DeleteUserDialog from "@/components/delete-user-dialog";
 import ModifyUserDialog from "@/components/modify-user-dialog";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import UsersTable from "@/components/users-table";
+import { Button } from "@/components/ui/button";
 
-function Dashboard() {
+function Dashboard({ onLogout }) {
   const queryClient = useQueryClient();
+  const [editingUser, setEditingUser] = useState(null);
+  const [deletingUser, setDeletingUser] = useState(null);
   const { data: users = [] } = useQuery({
     queryKey: ["users"],
     queryFn: fetchUsers,
@@ -29,56 +28,83 @@ function Dashboard() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["users"] }),
   });
 
+  const deleteUserMutation = useMutation({
+    mutationFn: deleteUser,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["users"] }),
+  });
+
   const handleCreateUser = (user) => createUserMutation.mutateAsync(user);
 
-  const handleUpdateUser = (id, user) =>
-    updateUserMutation.mutateAsync({ id, user });
+  const handleModifyDialogOpenChange = (open) => {
+    if (!open) {
+      setEditingUser(null);
+    }
+  };
+
+  const handleDeleteDialogOpenChange = (open) => {
+    if (!open) {
+      setDeletingUser(null);
+    }
+  };
+
+  const handleModifyUser = (user) => {
+    if (!editingUser) {
+      return undefined;
+    }
+
+    return updateUserMutation.mutateAsync({ id: editingUser.id, user });
+  };
+
+  const handleDeleteUser = () => {
+    if (!deletingUser) {
+      return;
+    }
+
+    deleteUserMutation.mutate(deletingUser.id, {
+      onSuccess: () => setDeletingUser(null),
+    });
+  };
 
   return (
-    <main className="w-full min-h-full p-6">
+    <main className="min-h-full w-full p-6">
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <h1 className="text-2xl font-semibold">Dashboard</h1>
-          <CreateUserDialog onSubmit={handleCreateUser} />
+          <div className="flex items-center gap-2">
+            <CreateUserDialog onSubmit={handleCreateUser} />
+            <Button type="button" variant="outline" onClick={onLogout}>
+              <LogOut />
+              Deconnexion
+            </Button>
+          </div>
         </div>
 
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>ID</TableHead>
-              <TableHead>Nom</TableHead>
-              <TableHead>Prenom</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Date de naissance</TableHead>
-              <TableHead>Ville</TableHead>
-              <TableHead>Code postal</TableHead>
-              <TableHead>Cree le</TableHead>
-              <TableHead>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {users.map((user) => (
-              <TableRow key={user.id}>
-                <TableCell>{user.id}</TableCell>
-                <TableCell>{user.last_name}</TableCell>
-                <TableCell>{user.first_name}</TableCell>
-                <TableCell>{user.email}</TableCell>
-                <TableCell>{user.birthdate}</TableCell>
-                <TableCell>{user.city}</TableCell>
-                <TableCell>{user.postal_code}</TableCell>
-                <TableCell>{user.created_at}</TableCell>
-                <TableCell>
-                  <ModifyUserDialog
-                    user={user}
-                    onSubmit={(updatedUser) =>
-                      handleUpdateUser(user.id, updatedUser)
-                    }
-                  />
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+        <UsersTable
+          isDeletingUser={deleteUserMutation.isPending}
+          onDeleteUser={setDeletingUser}
+          onModifyUser={setEditingUser}
+          users={users}
+        />
+
+        {editingUser && (
+          <ModifyUserDialog
+            user={editingUser}
+            triggerLabel={null}
+            open
+            onOpenChange={handleModifyDialogOpenChange}
+            onSubmit={handleModifyUser}
+          />
+        )}
+
+        {deletingUser && (
+          <DeleteUserDialog
+            isSubmitting={deleteUserMutation.isPending}
+            onOpenChange={handleDeleteDialogOpenChange}
+            onSubmit={handleDeleteUser}
+            open
+            user={deletingUser}
+          />
+        )}
       </div>
     </main>
   );

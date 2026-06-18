@@ -50,6 +50,8 @@ function FormField({ id, label, error, children }) {
 function UserDialog({
   initialValues,
   onSubmit,
+  open,
+  onOpenChange,
   triggerLabel,
   title,
   description,
@@ -60,19 +62,23 @@ function UserDialog({
     () => ({ ...emptyFormData, ...initialValues }),
     [initialValues],
   );
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
   const [formData, setFormData] = useState(defaultFormData);
   const [errors, setErrors] = useState(emptyErrors);
-  const [submitError, setSubmitError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const isControlled = open !== undefined;
+  const dialogOpen = isControlled ? open : internalOpen;
 
   const handleOpenChange = (nextOpen) => {
-    setOpen(nextOpen);
+    if (!isControlled) {
+      setInternalOpen(nextOpen);
+    }
+
+    onOpenChange?.(nextOpen);
 
     if (nextOpen) {
       setFormData(defaultFormData);
       setErrors(emptyErrors);
-      setSubmitError("");
     }
   };
 
@@ -81,7 +87,6 @@ function UserDialog({
 
     setFormData((current) => ({ ...current, [name]: value }));
     setErrors((current) => ({ ...current, [name]: "" }));
-    setSubmitError("");
   };
 
   const handleSubmit = async (event) => {
@@ -91,27 +96,26 @@ function UserDialog({
       const validatedData = validateForm(formData);
 
       setErrors(emptyErrors);
-      setSubmitError("");
       setIsSubmitting(true);
       await onSubmit?.(validatedData);
-      setOpen(false);
+      handleOpenChange(false);
     } catch (error) {
       if (error.errors) {
         setErrors({ ...emptyErrors, ...error.errors });
         return;
       }
-
-      setSubmitError("Impossible d'enregistrer l'utilisateur");
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger render={<Button type="button" />}>
-        {triggerLabel}
-      </DialogTrigger>
+    <Dialog open={dialogOpen} onOpenChange={handleOpenChange}>
+      {triggerLabel && (
+        <DialogTrigger render={<Button type="button" />}>
+          {triggerLabel}
+        </DialogTrigger>
+      )}
       <DialogContent className="max-h-[calc(100vh-2rem)] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
@@ -209,18 +213,12 @@ function UserDialog({
           </div>
         </form>
 
-        {submitError && (
-          <p role="alert" className="text-sm text-destructive">
-            {submitError}
-          </p>
-        )}
-
         <DialogFooter>
           <DialogClose render={<Button type="button" variant="outline" />}>
             Annuler
           </DialogClose>
           <Button type="submit" form={formId} disabled={isSubmitting}>
-            {isSubmitting ? "Enregistrement..." : submitLabel}
+            {isSubmitting ? `${submitLabel}...` : submitLabel}
           </Button>
         </DialogFooter>
       </DialogContent>
