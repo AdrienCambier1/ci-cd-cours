@@ -4,7 +4,15 @@ import {
   getCoreRowModel,
   useReactTable,
 } from "@tanstack/react-table";
+import { Users } from "lucide-react";
 import UserActionsMenu from "@/components/user-actions-menu";
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty";
 import {
   Table,
   TableBody,
@@ -98,13 +106,23 @@ function UsersTable({ isDeletingUser, onDeleteUser, onModifyUser, users }) {
               ))}
             </TableRow>
           ))
-        ) : (
-          <TableRow>
-            <TableCell colSpan={columns.length} className="h-24 text-center">
-              Aucun utilisateur.
-            </TableCell>
-          </TableRow>
-        )}
+          ) : (
+            <TableRow>
+              <TableCell colSpan={columns.length} className="h-48">
+                <Empty>
+                  <EmptyHeader>
+                    <EmptyMedia variant="icon">
+                      <Users />
+                    </EmptyMedia>
+                    <EmptyTitle>Aucun utilisateur</EmptyTitle>
+                    <EmptyDescription>
+                      Les utilisateurs crees apparaitront ici.
+                    </EmptyDescription>
+                  </EmptyHeader>
+                </Empty>
+              </TableCell>
+            </TableRow>
+          )}
       </TableBody>
     </Table>
   );
