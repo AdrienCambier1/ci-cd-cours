@@ -1,4 +1,4 @@
-name: Build, Test and Deploy React Application
+name: Build, Test and Deploy
 
 on:
   push:
@@ -7,10 +7,14 @@ on:
     branches: [main]
 
 jobs:
-  build_test:
+  build_frontend:
+    name: Build and test frontend
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: read
+    env:
+      AUTH_USERNAME: admin
+      AUTH_PASSWORD: admin
 
     strategy:
       matrix:
@@ -25,32 +29,30 @@ jobs:
           node-version: ${{ matrix.node-version }}
           registry-url: https://registry.npmjs.org/
 
-      - name: npm ci, build and test
-        env:
-          AUTH_USERNAME: admin
-          AUTH_PASSWORD: admin
-        run: |
-          npm ci
-          npm run jsdoc
-          npm run build --if-present
-          npm test
+      - name: Install dependencies
+        run: npm ci
 
-      - name: Create GitHub Pages SPA fallback
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        run: cp dist/index.html dist/404.html
+      - name: Generate documentation
+        run: npm run jsdoc
+
+      - name: Build frontend
+        run: npm run build --if-present
+
+      - name: Run frontend tests
+        run: npm test
 
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v5
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
-      - name: Authenticate with npm
-        run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
-
       - name: Setup Pages
-        id: pages
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: actions/configure-pages@v3
+
+      - name: Create GitHub Pages SPA fallback
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: cp dist/index.html dist/404.html
 
       - name: Upload artifact
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -59,25 +61,11 @@ jobs:
           path: dist
           if-no-files-found: error
 
-      - name: Build and publish package on NPM
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        run: |
-          LOCAL_VERSION=$(node -p "require('./package.json').version")
-          REMOTE_VERSION=$(npm view ci-cd-cours@$LOCAL_VERSION version 2>/dev/null || echo "")
-
-          if [ "$REMOTE_VERSION" != "$LOCAL_VERSION" ]; then
-            npm run build-npm-ci
-            npm publish
-          else
-            echo "Version $LOCAL_VERSION already exists on npm. Skipping publish."
-          fi
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
-  test_docker_compose:
+  test_docker_stack:
+    name: Test Docker stack
     runs-on: ubuntu-latest
 
-    needs: build_test
+    needs: build_frontend
 
     steps:
       - uses: actions/checkout@v4
@@ -96,10 +84,11 @@ jobs:
         if: always()
         run: docker compose down -v
 
-  deploy:
+  deploy_frontend:
+    name: Deploy frontend to GitHub Pages
     runs-on: ubuntu-latest
 
-    needs: build_test
+    needs: [build_frontend, test_docker_stack]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
 
     environment:
@@ -111,14 +100,78 @@ jobs:
       id-token: write
 
     steps:
-      - name: Deploy to Github Pages
+      - name: Deploy frontend
         id: deployment
         uses: actions/deploy-pages@v4
 
-  publish_docker_images:
+  deploy_backend:
+    name: Deploy backend to Vercel
     runs-on: ubuntu-latest
 
-    needs: test_docker_compose
+    needs: test_docker_stack
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+
+      - name: Pull Vercel Environment Information
+        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Build Vercel Project Artifacts
+        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Deploy Vercel Project Artifacts
+        run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
+
+  publish_npm:
+    name: Publish package to NPM
+    runs-on: ubuntu-latest
+
+    needs: build_frontend
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    strategy:
+      matrix:
+        node-version: [24.x]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          registry-url: https://registry.npmjs.org/
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build and publish package on NPM
+        run: |
+          LOCAL_VERSION=$(node -p "require('./package.json').version")
+          REMOTE_VERSION=$(npm view ci-cd-cours@$LOCAL_VERSION version 2>/dev/null || echo "")
+
+          if [ "$REMOTE_VERSION" != "$LOCAL_VERSION" ]; then
+            npm run build-npm-ci
+            npm publish
+          else
+            echo "Version $LOCAL_VERSION already exists on npm. Skipping publish."
+          fi
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  publish_docker_images:
+    name: Publish Docker images
+    runs-on: ubuntu-latest
+
+    needs: test_docker_stack
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
 
     steps:
