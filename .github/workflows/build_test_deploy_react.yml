@@ -13,8 +13,8 @@ jobs:
     permissions:
       contents: read
     env:
-      AUTH_USERNAME: admin
-      AUTH_PASSWORD: admin
+      AUTH_USERNAME: ${{ secrets.AUTH_USERNAME }}
+      AUTH_PASSWORD: ${{ secrets.AUTH_PASSWORD }}
       API_URL: ${{ secrets.API_URL }}
 
     strategy:
@@ -189,12 +189,16 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Build Docker images
+        env:
+          AUTH_USERNAME: ${{ secrets.AUTH_USERNAME }}
+          AUTH_PASSWORD: ${{ secrets.AUTH_PASSWORD }}
+          API_URL: ${{ secrets.API_URL }}
         run: |
           docker build -f Dockerfile.backend -t ${{ secrets.DOCKERHUB_USERNAME }}/ci-cd-cours-backend:latest .
           docker build \
-            --build-arg AUTH_USERNAME=admin \
-            --build-arg AUTH_PASSWORD=admin \
-            --build-arg API_URL=${{ secrets.API_URL }} \
+            --build-arg AUTH_USERNAME="${AUTH_USERNAME}" \
+            --build-arg AUTH_PASSWORD="${AUTH_PASSWORD}" \
+            --build-arg API_URL="${API_URL}" \
             -f Dockerfile.frontend \
             -t ${{ secrets.DOCKERHUB_USERNAME }}/ci-cd-cours-frontend:latest \
             .
