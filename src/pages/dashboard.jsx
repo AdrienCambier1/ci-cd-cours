@@ -81,7 +81,6 @@ function Dashboard({ onLogout }) {
         {editingUser && (
           <ModifyUserDialog
             user={editingUser}
-            triggerLabel={null}
             open
             onOpenChange={handleModifyDialogOpenChange}
             onSubmit={handleModifyUser}

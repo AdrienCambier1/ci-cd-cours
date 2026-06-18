@@ -167,7 +167,9 @@ describe("UserDialog", () => {
   it("renders the create dialog labels", async () => {
     render(<CreateUserDialog />);
 
-    fireEvent.click(screen.getByRole("button", { name: "Créer" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Ajouter un utilisateur" }),
+    );
 
     expect(
       await screen.findByRole("heading", { name: "Créer un utilisateur" }),

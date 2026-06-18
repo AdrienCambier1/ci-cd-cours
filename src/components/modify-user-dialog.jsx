@@ -12,7 +12,6 @@ function ModifyUserDialog({ user, ...props }) {
         city: user.city,
         postalCode: user.postal_code,
       }}
-      triggerLabel="Modifier"
       title="Modifier l'utilisateur"
       description="Mettez a jour les informations de l'utilisateur."
       submitLabel="Modifier"
