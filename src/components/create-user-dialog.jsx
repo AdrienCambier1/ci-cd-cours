@@ -4,10 +4,10 @@ function CreateUserDialog(props) {
   return (
     <UserDialog
       formId="create-user-form"
-      triggerLabel="Creer"
-      title="Creer un utilisateur"
+      triggerLabel="Créer"
+      title="Créer un utilisateur"
       description="Renseignez les informations de l'utilisateur."
-      submitLabel="Creer"
+      submitLabel="Créer"
       {...props}
     />
   );

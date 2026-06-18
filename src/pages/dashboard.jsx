@@ -65,7 +65,7 @@ function Dashboard({ onLogout }) {
             <CreateUserDialog onSubmit={handleCreateUser} />
             <Button type="button" variant="outline" onClick={onLogout}>
               <LogOut />
-              Deconnexion
+              Déconnexion
             </Button>
           </div>
         </div>
