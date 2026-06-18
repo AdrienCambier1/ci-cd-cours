@@ -13,6 +13,7 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
   TableBody,
@@ -22,7 +23,23 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-function UsersTable({ isDeletingUser, onDeleteUser, onModifyUser, users }) {
+const skeletonWidths = [
+  "w-24",
+  "w-24",
+  "w-48",
+  "w-32",
+  "w-24",
+  "w-20",
+  "ml-auto w-8",
+];
+
+function UsersTable({
+  isDeletingUser,
+  isLoading,
+  onDeleteUser,
+  onModifyUser,
+  users,
+}) {
   const columns = useMemo(
     () => [
       {
@@ -96,7 +113,17 @@ function UsersTable({ isDeletingUser, onDeleteUser, onModifyUser, users }) {
         ))}
       </TableHeader>
       <TableBody>
-        {table.getRowModel().rows.length ? (
+        {isLoading ? (
+          Array.from({ length: 5 }).map((_, rowIndex) => (
+            <TableRow key={rowIndex} aria-label="Chargement des utilisateurs">
+              {skeletonWidths.map((width, cellIndex) => (
+                <TableCell key={cellIndex}>
+                  <Skeleton className={`h-4 ${width}`} />
+                </TableCell>
+              ))}
+            </TableRow>
+          ))
+        ) : table.getRowModel().rows.length ? (
           table.getRowModel().rows.map((row) => (
             <TableRow key={row.id}>
               {row.getVisibleCells().map((cell) => (
@@ -106,23 +133,23 @@ function UsersTable({ isDeletingUser, onDeleteUser, onModifyUser, users }) {
               ))}
             </TableRow>
           ))
-          ) : (
-            <TableRow>
-              <TableCell colSpan={columns.length} className="h-48">
-                <Empty>
-                  <EmptyHeader>
-                    <EmptyMedia variant="icon">
-                      <Users />
-                    </EmptyMedia>
-                    <EmptyTitle>Aucun utilisateur</EmptyTitle>
-                    <EmptyDescription>
-                      Les utilisateurs crees apparaitront ici.
-                    </EmptyDescription>
-                  </EmptyHeader>
-                </Empty>
-              </TableCell>
-            </TableRow>
-          )}
+        ) : (
+          <TableRow>
+            <TableCell colSpan={columns.length} className="h-48">
+              <Empty>
+                <EmptyHeader>
+                  <EmptyMedia variant="icon">
+                    <Users />
+                  </EmptyMedia>
+                  <EmptyTitle>Aucun utilisateur</EmptyTitle>
+                  <EmptyDescription>
+                    Les utilisateurs crees apparaitront ici.
+                  </EmptyDescription>
+                </EmptyHeader>
+              </Empty>
+            </TableCell>
+          </TableRow>
+        )}
       </TableBody>
     </Table>
   );

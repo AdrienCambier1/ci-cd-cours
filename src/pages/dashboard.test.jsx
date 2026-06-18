@@ -44,6 +44,7 @@ jest.mock("@/components/users-table", () => ({
   __esModule: true,
   default: function MockUsersTable({
     isDeletingUser,
+    isLoading,
     onDeleteUser,
     onModifyUser,
     users,
@@ -51,6 +52,7 @@ jest.mock("@/components/users-table", () => ({
     return (
       <section aria-label="mock-users-table">
         <span>users-count:{users.length}</span>
+        <span>loading:{String(isLoading)}</span>
         <span>delete-pending:{String(isDeletingUser)}</span>
         <button type="button" onClick={() => onModifyUser(mockUser)}>
           mock-open-modify
@@ -144,6 +146,7 @@ describe("Dashboard", () => {
     renderDashboard();
 
     expect(await screen.findByText("users-count:1")).toBeInTheDocument();
+    expect(screen.getByText("loading:false")).toBeInTheDocument();
     expect(fetchUsers).toHaveBeenCalledTimes(1);
   });
 

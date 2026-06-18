@@ -54,6 +54,22 @@ describe("UsersTable", () => {
     ).toBeInTheDocument();
   });
 
+  it("renders skeleton rows while users are loading", () => {
+    render(
+      <UsersTable
+        isLoading
+        users={[]}
+        onModifyUser={jest.fn()}
+        onDeleteUser={jest.fn()}
+      />,
+    );
+
+    expect(screen.getAllByLabelText("Chargement des utilisateurs")).toHaveLength(
+      5,
+    );
+    expect(screen.queryByText("Aucun utilisateur")).not.toBeInTheDocument();
+  });
+
   it("passes the selected user to the modify handler", async () => {
     const onModifyUser = jest.fn();
 
