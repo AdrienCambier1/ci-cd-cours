@@ -1,7 +1,7 @@
-const usersUrl = "http://localhost:8000/users";
+const usersEndpoint = `${process.env.API_URL}/users`;
 
 export async function fetchUsers() {
-  const response = await fetch(usersUrl);
+  const response = await fetch(usersEndpoint);
 
   if (!response.ok) {
     throw new Error("Unable to fetch users");
@@ -12,7 +12,7 @@ export async function fetchUsers() {
 }
 
 export async function createUser(user) {
-  const response = await fetch(usersUrl, {
+  const response = await fetch(usersEndpoint, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -29,7 +29,7 @@ export async function createUser(user) {
 }
 
 export async function updateUser({ id, user }) {
-  const response = await fetch(`${usersUrl}/${id}`, {
+  const response = await fetch(`${usersEndpoint}/${id}`, {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",
@@ -46,7 +46,7 @@ export async function updateUser({ id, user }) {
 }
 
 export async function deleteUser(id) {
-  const response = await fetch(`${usersUrl}/${id}`, {
+  const response = await fetch(`${usersEndpoint}/${id}`, {
     method: "DELETE",
   });
 

@@ -15,6 +15,7 @@ jobs:
     env:
       AUTH_USERNAME: admin
       AUTH_PASSWORD: admin
+      API_URL: ${{ secrets.API_URL }}
 
     strategy:
       matrix:
@@ -72,10 +73,14 @@ jobs:
 
       - name: Create env file
         run: |
-          echo "MYSQL_ROOT_PASSWORD=adrien" > .env
+          echo "MYSQL_PASSWORD=adrien" > .env
+          echo "MYSQL_PORT=3306" >> .env
           echo "MYSQL_DATABASE=ynov_ci" >> .env
           echo "MYSQL_USER=root" >> .env
           echo "MYSQL_HOST=db" >> .env
+          echo "AUTH_USERNAME=admin" >> .env
+          echo "AUTH_PASSWORD=admin" >> .env
+          echo "API_URL=http://localhost:8000" >> .env
 
       - name: Start Docker Compose and check services health
         run: docker compose up --build --wait --wait-timeout 180
@@ -186,7 +191,13 @@ jobs:
       - name: Build Docker images
         run: |
           docker build -f Dockerfile.backend -t ${{ secrets.DOCKERHUB_USERNAME }}/ci-cd-cours-backend:latest .
-          docker build -f Dockerfile.frontend -t ${{ secrets.DOCKERHUB_USERNAME }}/ci-cd-cours-frontend:latest .
+          docker build \
+            --build-arg AUTH_USERNAME=admin \
+            --build-arg AUTH_PASSWORD=admin \
+            --build-arg API_URL=${{ secrets.API_URL }} \
+            -f Dockerfile.frontend \
+            -t ${{ secrets.DOCKERHUB_USERNAME }}/ci-cd-cours-frontend:latest \
+            .
 
       - name: Push Docker images
         run: |

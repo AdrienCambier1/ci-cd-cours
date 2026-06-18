@@ -3,13 +3,13 @@ services:
     image: mysql:oraclelinux9
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_PASSWORD}
       MYSQL_DATABASE: ${MYSQL_DATABASE}
     volumes:
       - db_data:/var/lib/mysql
       - ./database:/docker-entrypoint-initdb.d:ro
     healthcheck:
-      test: 'mysql -u root -p${MYSQL_ROOT_PASSWORD} -e "SHOW DATABASES;"'
+      test: 'mysql -u root -p$${MYSQL_ROOT_PASSWORD} -e "SHOW DATABASES;"'
 
   api:
     build:
@@ -44,6 +44,7 @@ services:
       args:
         AUTH_USERNAME: ${AUTH_USERNAME}
         AUTH_PASSWORD: ${AUTH_PASSWORD}
+        API_URL: ${API_URL}
     restart: always
     depends_on:
       api:

@@ -8,6 +8,7 @@ RUN npm ci
 COPY . .
 ARG AUTH_USERNAME
 ARG AUTH_PASSWORD
+ARG API_URL
 RUN npm run build -- --base=/
 
 FROM nginx:alpine
