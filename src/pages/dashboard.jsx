@@ -12,7 +12,7 @@ function Dashboard({ onLogout }) {
   const queryClient = useQueryClient();
   const [editingUser, setEditingUser] = useState(null);
   const [deletingUser, setDeletingUser] = useState(null);
-  const { data: users = [], isLoading } = useQuery({
+  const { data: users = [], isFetching } = useQuery({
     queryKey: ["users"],
     queryFn: fetchUsers,
     enabled: typeof globalThis.fetch === "function",
@@ -72,7 +72,7 @@ function Dashboard({ onLogout }) {
 
         <UsersTable
           isDeletingUser={deleteUserMutation.isPending}
-          isLoading={isLoading}
+          isLoading={isFetching && users.length === 0}
           onDeleteUser={setDeletingUser}
           onModifyUser={setEditingUser}
           users={users}

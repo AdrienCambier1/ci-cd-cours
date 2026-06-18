@@ -23,16 +23,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-const skeletonWidths = [
-  "w-24",
-  "w-24",
-  "w-48",
-  "w-32",
-  "w-24",
-  "w-20",
-  "ml-auto w-8",
-];
-
 function UsersTable({
   isDeletingUser,
   isLoading,
@@ -116,9 +106,9 @@ function UsersTable({
         {isLoading ? (
           Array.from({ length: 5 }).map((_, rowIndex) => (
             <TableRow key={rowIndex} aria-label="Chargement des utilisateurs">
-              {skeletonWidths.map((width, cellIndex) => (
+              {Array.from({ length: columns.length }).map((_, cellIndex) => (
                 <TableCell key={cellIndex}>
-                  <Skeleton className={`h-4 ${width}`} />
+                  <Skeleton className="h-8 w-full" />
                 </TableCell>
               ))}
             </TableRow>
