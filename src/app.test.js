@@ -1,9 +1,29 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import App from "./app";
 import { setIsAuthenticated } from "./auth";
 import Dashboard from "./pages/dashboard";
 import { queryClient } from "./query-client";
+
+const userFixture = {
+  id: 1,
+  last_name: "Dupont",
+  first_name: "Jean",
+  email: "jean.dupont@example.com",
+  birthdate: "2000-01-15",
+  city: "Paris",
+  postal_code: "75001",
+  created_at: "2026-06-15T13:38:05",
+};
+
+function mockUsersFetch(users = [userFixture]) {
+  globalThis.fetch = jest.fn(() =>
+    Promise.resolve({
+      ok: true,
+      json: () => Promise.resolve({ users }),
+    }),
+  );
+}
 
 describe("App", () => {
   beforeEach(() => {
@@ -38,26 +58,7 @@ describe("App", () => {
 
   it("renders the dashboard route when authenticated", async () => {
     setIsAuthenticated(true);
-    globalThis.fetch = jest.fn(() =>
-      Promise.resolve({
-        ok: true,
-        json: () =>
-          Promise.resolve({
-            users: [
-              {
-                id: 1,
-                last_name: "Dupont",
-                first_name: "Jean",
-                email: "jean.dupont@example.com",
-                birthdate: "2000-01-15",
-                city: "Paris",
-                postal_code: "75001",
-                created_at: "2026-06-15T13:38:05",
-              },
-            ],
-          }),
-      }),
-    );
+    mockUsersFetch();
     window.history.pushState({}, "", "/ci-cd-cours/dashboard");
 
     render(<App />);
@@ -68,6 +69,60 @@ describe("App", () => {
     expect(
       await screen.findByText("jean.dupont@example.com"),
     ).toBeInTheDocument();
+  });
+
+  it("opens the row actions menu and modify dialog", async () => {
+    setIsAuthenticated(true);
+    mockUsersFetch();
+    window.history.pushState({}, "", "/ci-cd-cours/dashboard");
+
+    render(<App />);
+
+    expect(
+      await screen.findByText("jean.dupont@example.com"),
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Ouvrir le menu" }));
+    fireEvent.click(await screen.findByText("Modifier"));
+
+    expect(
+      await screen.findByRole("heading", {
+        name: "Modifier l'utilisateur",
+      }),
+    ).toBeInTheDocument();
+  });
+
+  it("opens the row actions menu and delete dialog", async () => {
+    setIsAuthenticated(true);
+    mockUsersFetch();
+    window.history.pushState({}, "", "/ci-cd-cours/dashboard");
+
+    render(<App />);
+
+    expect(
+      await screen.findByText("jean.dupont@example.com"),
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Ouvrir le menu" }));
+    fireEvent.click(await screen.findByText("Supprimer"));
+
+    expect(
+      await screen.findByRole("heading", {
+        name: "Supprimer l'utilisateur ?",
+      }),
+    ).toBeInTheDocument();
+  });
+
+  it("logs out from the dashboard", async () => {
+    setIsAuthenticated(true);
+    mockUsersFetch();
+    window.history.pushState({}, "", "/ci-cd-cours/dashboard");
+
+    render(<App />);
+
+    fireEvent.click(await screen.findByRole("button", { name: "Deconnexion" }));
+
+    expect(screen.getByRole("form")).toBeInTheDocument();
   });
 
   it("renders dashboard when fetch is not available", () => {

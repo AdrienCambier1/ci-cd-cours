@@ -44,3 +44,15 @@ export async function updateUser({ id, user }) {
   const data = await response.json();
   return data.user;
 }
+
+export async function deleteUser(id) {
+  const response = await fetch(`${usersUrl}/${id}`, {
+    method: "DELETE",
+  });
+
+  if (!response.ok) {
+    throw new Error("Unable to delete user");
+  }
+
+  return response.json();
+}

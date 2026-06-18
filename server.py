@@ -110,3 +110,14 @@ async def update_user(user_id: int, user: dict):
         raise HTTPException(status_code=404, detail="User not found")
 
     return {"user": updated_user}
+
+@app.delete("/users/{user_id}")
+async def delete_user(user_id: int):
+    with get_connection() as conn:
+        with conn.cursor(dictionary=True) as cursor:
+            cursor.execute("DELETE FROM users WHERE id = %s", (user_id,))
+            conn.commit()
+            if cursor.rowcount == 0:
+                raise HTTPException(status_code=404, detail="User not found")
+
+    return {"message": "User deleted successfully"}

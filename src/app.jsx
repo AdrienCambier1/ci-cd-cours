@@ -14,6 +14,12 @@ function App() {
     setAuthenticated(true);
   };
 
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    setAuthenticated(false);
+    queryClient.clear();
+  };
+
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter basename="/ci-cd-cours">
@@ -32,7 +38,11 @@ function App() {
           <Route
             path="/dashboard"
             element={
-              isAuthenticated ? <Dashboard /> : <Navigate to="/login" replace />
+              isAuthenticated ? (
+                <Dashboard onLogout={handleLogout} />
+              ) : (
+                <Navigate to="/login" replace />
+              )
             }
           />
           <Route
