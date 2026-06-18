@@ -35,6 +35,10 @@ jobs:
           npm run build --if-present
           npm test
 
+      - name: Create GitHub Pages SPA fallback
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: cp dist/index.html dist/404.html
+
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v5
         env:
