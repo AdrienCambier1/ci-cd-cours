@@ -140,7 +140,7 @@ describe("App", () => {
 
     render(<App />);
 
-    fireEvent.click(await screen.findByRole("button", { name: "Deconnexion" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Déconnexion" }));
 
     expect(screen.getByRole("form")).toBeInTheDocument();
   });

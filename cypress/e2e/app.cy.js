@@ -56,7 +56,7 @@ describe("app navigation", () => {
   it("logs out authenticated users", () => {
     visitAuthenticatedDashboard();
 
-    cy.contains("button", "Deconnexion").click();
+    cy.contains("button", "Déconnexion").click();
 
     cy.window()
       .its("sessionStorage")

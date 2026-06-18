@@ -232,7 +232,7 @@ describe("Dashboard", () => {
     const onLogout = jest.fn();
 
     renderDashboard(onLogout);
-    fireEvent.click(screen.getByRole("button", { name: "Deconnexion" }));
+    fireEvent.click(screen.getByRole("button", { name: "Déconnexion" }));
 
     expect(onLogout).toHaveBeenCalledTimes(1);
   });

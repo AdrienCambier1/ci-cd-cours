@@ -167,10 +167,10 @@ describe("UserDialog", () => {
   it("renders the create dialog labels", async () => {
     render(<CreateUserDialog />);
 
-    fireEvent.click(screen.getByRole("button", { name: "Creer" }));
+    fireEvent.click(screen.getByRole("button", { name: "Créer" }));
 
     expect(
-      await screen.findByRole("heading", { name: "Creer un utilisateur" }),
+      await screen.findByRole("heading", { name: "Créer un utilisateur" }),
     ).toBeInTheDocument();
     expect(
       screen.getByText("Renseignez les informations de l'utilisateur."),
