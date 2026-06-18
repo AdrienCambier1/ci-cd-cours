@@ -12,8 +12,13 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  Field,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 
 const emptyFormData = {
   lastName: "",
@@ -35,15 +40,11 @@ const emptyErrors = {
 
 function FormField({ id, label, error, children }) {
   return (
-    <div className="grid gap-2">
-      <Label htmlFor={id}>{label}</Label>
+    <Field data-invalid={!!error}>
+      <FieldLabel htmlFor={id}>{label}</FieldLabel>
       {children}
-      {error && (
-        <span id={`${id}-error`} className="text-xs text-destructive">
-          {error}
-        </span>
-      )}
-    </div>
+      <FieldError id={`${id}-error`}>{error}</FieldError>
+    </Field>
   );
 }
 
@@ -123,8 +124,8 @@ function UserDialog({
         </DialogHeader>
 
         <form id={formId} onSubmit={handleSubmit}>
-          <div className="grid gap-4">
-            <div className="grid gap-4 sm:grid-cols-2">
+          <FieldGroup>
+            <FieldGroup className="grid gap-4 sm:grid-cols-2">
               <FormField id="lastName" label="Nom" error={errors.lastName}>
                 <Input
                   id="lastName"
@@ -150,7 +151,7 @@ function UserDialog({
                   }
                 />
               </FormField>
-            </div>
+            </FieldGroup>
 
             <FormField id="email" label="Email" error={errors.email}>
               <Input
@@ -210,7 +211,7 @@ function UserDialog({
                 }
               />
             </FormField>
-          </div>
+          </FieldGroup>
         </form>
 
         <DialogFooter>

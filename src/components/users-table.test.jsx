@@ -1,6 +1,28 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import UsersTable from "./users-table";
 
+let mockHeaderGroups = null;
+
+jest.mock("@tanstack/react-table", () => {
+  const actual = jest.requireActual("@tanstack/react-table");
+
+  return {
+    ...actual,
+    useReactTable: (options) => {
+      const table = actual.useReactTable(options);
+
+      if (!mockHeaderGroups) {
+        return table;
+      }
+
+      return {
+        ...table,
+        getHeaderGroups: () => mockHeaderGroups,
+      };
+    },
+  };
+});
+
 const userFixture = {
   id: 1,
   last_name: "Dupont",
@@ -12,6 +34,10 @@ const userFixture = {
 };
 
 describe("UsersTable", () => {
+  afterEach(() => {
+    mockHeaderGroups = null;
+  });
+
   it("renders table headers and users", () => {
     render(
       <UsersTable
@@ -52,6 +78,21 @@ describe("UsersTable", () => {
     expect(
       screen.getByText("Les utilisateurs crees apparaitront ici."),
     ).toBeInTheDocument();
+  });
+
+  it("renders placeholder headers without content", () => {
+    mockHeaderGroups = [
+      {
+        id: "placeholder-group",
+        headers: [{ id: "placeholder-header", isPlaceholder: true }],
+      },
+    ];
+
+    render(
+      <UsersTable users={[]} onModifyUser={jest.fn()} onDeleteUser={jest.fn()} />,
+    );
+
+    expect(screen.getByRole("columnheader")).toBeEmptyDOMElement();
   });
 
   it("renders skeleton rows while users are loading", () => {

@@ -57,7 +57,9 @@ describe("LoginForm", () => {
     });
     fireEvent.click(screen.getByRole("button", { name: "Se connecter" }));
 
-    expect(screen.getByText("Identifiants invalides")).toBeInTheDocument();
+    expect(
+      screen.getByText("Identifiant ou mot de passe invalides"),
+    ).toBeInTheDocument();
     expect(onLogin).not.toHaveBeenCalled();
     expect(mockNavigate).not.toHaveBeenCalled();
   });

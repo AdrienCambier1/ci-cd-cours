@@ -5,12 +5,17 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Field,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+  FieldDescription,
+} from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 
 const initialState = {
   username: "",
@@ -46,12 +51,12 @@ function LoginForm({
       return;
     }
 
-    setError("Identifiants invalides");
+    setError("Identifiant ou mot de passe invalides");
   };
 
   return (
-    <Card className="w-full max-w-sm">
-      <CardHeader>
+    <Card>
+      <CardHeader className="text-center">
         <CardTitle>Se connecter</CardTitle>
         <CardDescription>
           Entrez vos identifiants pour acceder au dashboard.
@@ -63,9 +68,9 @@ function LoginForm({
           onSubmit={handleSubmit}
           aria-label="Formulaire de connexion"
         >
-          <div className="flex flex-col gap-6">
-            <div className="grid gap-2">
-              <Label htmlFor="username">Utilisateur</Label>
+          <FieldGroup>
+            <Field data-invalid={!!error}>
+              <FieldLabel htmlFor="username">Utilisateur</FieldLabel>
               <Input
                 id="username"
                 name="username"
@@ -75,10 +80,10 @@ function LoginForm({
                 onChange={handleChange}
                 aria-invalid={!!error}
               />
-            </div>
+            </Field>
 
-            <div className="grid gap-2">
-              <Label htmlFor="password">Mot de passe</Label>
+            <Field data-invalid={!!error}>
+              <FieldLabel htmlFor="password">Mot de passe</FieldLabel>
               <Input
                 id="password"
                 name="password"
@@ -88,26 +93,27 @@ function LoginForm({
                 onChange={handleChange}
                 aria-invalid={!!error}
               />
-            </div>
-
-            {error && (
-              <p role="alert" className="text-sm text-destructive">
-                {error}
-              </p>
-            )}
-          </div>
+              <FieldError>{error}</FieldError>
+            </Field>
+            <Field>
+              <Button
+                type="submit"
+                form="login-form"
+                className="w-full"
+                disabled={!isComplete}
+              >
+                Se connecter
+              </Button>
+              <FieldDescription className="text-center">
+                Pas de compte?{" "}
+                <a href="https://www.youtube.com/watch?v=dQw4w9WgXcQ&autoplay=1">
+                  S'inscrire
+                </a>
+              </FieldDescription>
+            </Field>
+          </FieldGroup>
         </form>
       </CardContent>
-      <CardFooter>
-        <Button
-          type="submit"
-          form="login-form"
-          className="w-full"
-          disabled={!isComplete}
-        >
-          Se connecter
-        </Button>
-      </CardFooter>
     </Card>
   );
 }
