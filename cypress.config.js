@@ -4,6 +4,7 @@ export default defineConfig({
   allowCypressEnv: false,
 
   e2e: {
+    baseUrl: "http://127.0.0.1:5173/ci-cd-cours",
     setupNodeEvents() {
       // implement node event listeners here
     },

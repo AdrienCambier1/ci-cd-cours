@@ -47,19 +47,10 @@ function Dashboard({ onLogout }) {
     }
   };
 
-  const handleModifyUser = (user) => {
-    if (!editingUser) {
-      return undefined;
-    }
-
-    return updateUserMutation.mutateAsync({ id: editingUser.id, user });
-  };
+  const handleModifyUser = (user) =>
+    updateUserMutation.mutateAsync({ id: editingUser.id, user });
 
   const handleDeleteUser = () => {
-    if (!deletingUser) {
-      return;
-    }
-
     deleteUserMutation.mutate(deletingUser.id, {
       onSuccess: () => setDeletingUser(null),
     });

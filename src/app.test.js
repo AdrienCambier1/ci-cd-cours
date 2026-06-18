@@ -48,6 +48,26 @@ describe("App", () => {
     expect(screen.getByRole("form")).toBeInTheDocument();
   });
 
+  it("logs in and redirects to the dashboard with valid credentials", () => {
+    process.env.AUTH_USERNAME = "admin";
+    process.env.AUTH_PASSWORD = "secret";
+    window.history.pushState({}, "", "/ci-cd-cours/login");
+
+    render(<App />);
+
+    fireEvent.change(screen.getByLabelText("Utilisateur"), {
+      target: { value: "admin" },
+    });
+    fireEvent.change(screen.getByLabelText("Mot de passe"), {
+      target: { value: "secret" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Se connecter" }));
+
+    expect(
+      screen.getByRole("heading", { name: "Dashboard" }),
+    ).toBeInTheDocument();
+  });
+
   it("redirects the dashboard route to login form when not authenticated", () => {
     window.history.pushState({}, "", "/ci-cd-cours/dashboard");
 
