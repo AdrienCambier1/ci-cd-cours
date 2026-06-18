@@ -1,8 +1,9 @@
 /**
  * Calculates the age of a person based on their birth date.
  *
- * @param {object} p - An object representing a person, implementing a birth Date parameter.
+ * @param {{birth: Date}} p - Object containing a valid birth date.
  * @returns {number} The age in years of p.
+ * @throws {Error} When the person object or its birth date is missing or invalid.
  **/
 export function calculateAge(p) {
   if (p === undefined || p === null) {
