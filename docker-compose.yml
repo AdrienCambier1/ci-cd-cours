@@ -52,7 +52,7 @@ services:
     ports:
       - "80:80"
     healthcheck:
-      test: "wget -q -O /dev/null http://localhost:80"
+      test: "curl --fail http://localhost:80"
 
 volumes:
   db_data:
