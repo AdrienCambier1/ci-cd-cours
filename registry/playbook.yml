@@ -1,0 +1,68 @@
+---
+- name: Deploiement d'un Registry Docker securise
+  hosts: registry_hosts
+  become: true
+
+  vars:
+    project_dir: /home/ubuntu/registry-stack
+    public_ip: "{{ inventory_hostname }}"
+
+  tasks:
+    - name: Installer Docker et les outils requis
+      ansible.builtin.apt:
+        update_cache: true
+        name:
+          - docker.io
+          - docker-compose-v2
+          - apache2-utils
+        state: present
+
+    - name: Ajouter l'utilisateur ubuntu au groupe docker
+      ansible.builtin.user:
+        name: ubuntu
+        groups: docker
+        append: true
+
+    - name: Creer les dossiers du Registry
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        owner: ubuntu
+        group: ubuntu
+        mode: "0755"
+      loop:
+        - "{{ project_dir }}"
+        - "{{ project_dir }}/auth"
+        - "{{ project_dir }}/data"
+
+    - name: Creer le compte Registry admin
+      ansible.builtin.command:
+        cmd: >-
+          htpasswd -bc {{ project_dir }}/auth/registry.password
+          admin admin123
+        creates: "{{ project_dir }}/auth/registry.password"
+
+    - name: Proteger le fichier de mots de passe
+      ansible.builtin.file:
+        path: "{{ project_dir }}/auth/registry.password"
+        owner: ubuntu
+        group: ubuntu
+        mode: "0640"
+
+    - name: Copier le template Docker Compose
+      ansible.builtin.template:
+        src: docker-compose.yml
+        dest: "{{ project_dir }}/docker-compose.yml"
+        owner: ubuntu
+        group: ubuntu
+        mode: "0644"
+
+    - name: Demarrer la stack Registry
+      ansible.builtin.command:
+        cmd: docker compose up -d
+        chdir: "{{ project_dir }}"
+      register: compose_up
+      changed_when: >-
+        'Started' in compose_up.stderr or
+        'Created' in compose_up.stderr or
+        'Recreated' in compose_up.stderr

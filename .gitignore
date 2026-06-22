@@ -29,3 +29,10 @@ public/docs
 *.njsproj
 *.sln
 *.sw?
+# Terraform local and sensitive files
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+registry/terraform-user_accessKeys.csv
+registry/registry-key-terraform.pem
