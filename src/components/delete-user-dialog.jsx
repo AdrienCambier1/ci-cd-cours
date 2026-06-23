@@ -24,7 +24,8 @@ function DeleteUserDialog({
         <AlertDialogHeader>
           <AlertDialogTitle>Supprimer l'utilisateur ?</AlertDialogTitle>
           <AlertDialogDescription>
-            Cette action supprimera definitivement {fullName || "cet utilisateur"}.
+            Cette action supprimera definitivement{" "}
+            {fullName || "cet utilisateur"}.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
@@ -34,7 +35,7 @@ function DeleteUserDialog({
             disabled={isSubmitting}
             onClick={onSubmit}
           >
-            {isSubmitting ? "Suppression..." : "Supprimer"}
+            {isSubmitting ? "Supprimer..." : "Supprimer"}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

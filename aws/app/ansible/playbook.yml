@@ -6,6 +6,21 @@
     project_dir: /home/ubuntu/app-stack
 
   tasks:
+    - name: Verifier les variables de deploiement applicatif
+      ansible.builtin.assert:
+        that:
+          - REGISTRY_URL | default('') | string | trim | length > 0
+          - REGISTRY_USER | default('') | string | trim | length > 0
+          - REGISTRY_PASSWORD | default('') | string | trim | length > 0
+          - MYSQL_PASSWORD | default('') | string | trim | length > 0
+          - MYSQL_DATABASE | default('') | string | trim | length > 0
+          - MYSQL_HOST | default('') | string | trim == 'db'
+          - MYSQL_USER | default('') | string | trim == 'root'
+          - AUTH_USERNAME | default('') | string | trim | length > 0
+          - AUTH_PASSWORD | default('') | string | trim | length > 0
+        fail_msg: "Variables invalides: pour la DB Docker interne, utilise MYSQL_HOST=db et MYSQL_USER=root, avec les secrets registry/auth non vides."
+        quiet: true
+
     - name: Installer Docker et les outils requis
       ansible.builtin.apt:
         update_cache: true
@@ -90,14 +105,105 @@
       no_log: true
 
     - name: Demarrer la stack applicative
-      ansible.builtin.command:
-        cmd: docker compose up -d
-        chdir: "{{ project_dir }}"
-      async: 600
-      poll: 10
-      register: compose_up
-      changed_when: >-
-        'Started' in compose_up.stderr or
-        'Created' in compose_up.stderr or
-        'Recreated' in compose_up.stderr or
-        'Running' in compose_up.stdout
+      block:
+        - name: Precharger les images Docker
+          ansible.builtin.command:
+            cmd: docker compose pull
+            chdir: "{{ project_dir }}"
+          register: compose_pull
+          changed_when: compose_pull.rc == 0
+
+        - name: Demarrer la base de donnees
+          ansible.builtin.command:
+            cmd: docker compose up -d db
+            chdir: "{{ project_dir }}"
+          register: compose_db
+          changed_when: >-
+            'Started' in compose_db.stderr or
+            'Created' in compose_db.stderr or
+            'Recreated' in compose_db.stderr or
+            'Running' in compose_db.stdout
+
+        - name: Attendre que MySQL soit pret
+          ansible.builtin.command:
+            cmd: >-
+              docker compose exec -T db sh -c
+              'mysqladmin ping -h 127.0.0.1 -uroot -p"$MYSQL_ROOT_PASSWORD" --silent'
+            chdir: "{{ project_dir }}"
+          register: mysql_ping
+          retries: 30
+          delay: 10
+          until: mysql_ping.rc == 0
+          changed_when: false
+
+        - name: Demarrer l'API
+          ansible.builtin.command:
+            cmd: docker compose up -d api
+            chdir: "{{ project_dir }}"
+          register: compose_api
+          changed_when: >-
+            'Started' in compose_api.stderr or
+            'Created' in compose_api.stderr or
+            'Recreated' in compose_api.stderr or
+            'Running' in compose_api.stdout
+
+        - name: Attendre que l'API soit prete
+          ansible.builtin.command:
+            cmd: >-
+              docker compose exec -T api python -c
+              "import urllib.request; urllib.request.urlopen('http://localhost:8000/users', timeout=5)"
+            chdir: "{{ project_dir }}"
+          register: api_health
+          retries: 30
+          delay: 5
+          until: api_health.rc == 0
+          changed_when: false
+
+        - name: Demarrer le frontend
+          ansible.builtin.command:
+            cmd: docker compose up -d web
+            chdir: "{{ project_dir }}"
+          register: compose_web
+          changed_when: >-
+            'Started' in compose_web.stderr or
+            'Created' in compose_web.stderr or
+            'Recreated' in compose_web.stderr or
+            'Running' in compose_web.stdout
+
+        - name: Attendre que le frontend soit pret
+          ansible.builtin.command:
+            cmd: docker compose exec -T web curl --fail http://localhost:80
+            chdir: "{{ project_dir }}"
+          register: web_health
+          retries: 12
+          delay: 5
+          until: web_health.rc == 0
+          changed_when: false
+
+      rescue:
+        - name: Afficher l'etat Docker Compose
+          ansible.builtin.command:
+            cmd: docker compose ps
+            chdir: "{{ project_dir }}"
+          register: compose_ps
+          changed_when: false
+          failed_when: false
+
+        - name: Afficher les logs Docker Compose
+          ansible.builtin.command:
+            cmd: docker compose logs --tail=150
+            chdir: "{{ project_dir }}"
+          register: compose_logs
+          changed_when: false
+          failed_when: false
+
+        - name: Echouer avec le diagnostic Docker
+          ansible.builtin.fail:
+            msg: |
+              Le demarrage de la stack applicative a echoue.
+
+              Etat Docker Compose:
+              {{ compose_ps.stdout }}
+
+              Logs Docker Compose:
+              {{ compose_logs.stdout }}

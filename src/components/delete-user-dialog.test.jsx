@@ -49,8 +49,6 @@ describe("DeleteUserDialog", () => {
       ),
     ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Annuler" })).toBeDisabled();
-    expect(
-      screen.getByRole("button", { name: "Suppression..." }),
-    ).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Supprimer..." })).toBeDisabled();
   });
 });
