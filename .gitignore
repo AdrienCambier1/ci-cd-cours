@@ -34,10 +34,13 @@ public/docs
 *.tfstate
 *.tfstate.*
 *.tfplan
+aws/**/terraform-user_accessKeys.csv
+aws/**/app-key-terraform.pem
+aws/**/registry-key-terraform.pem
 registry/terraform-user_accessKeys.csv
 registry/registry-key-terraform.pem
 infra/app-key-terraform.pem
 infra/terraform-user_accessKeys.csv
 
-# Ansible inventory genere dynamiquement
-ansible/inventory.ini
+# Ansible inventories generated dynamically
+aws/**/ansible/inventory.ini

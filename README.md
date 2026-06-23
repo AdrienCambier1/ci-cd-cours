@@ -2,102 +2,114 @@
 
 Application React + FastAPI + MySQL avec pipeline CI/CD et deploiement automatise sur AWS.
 
-## Architecture Finale
+## Architecture AWS
 
-```
-                         ┌──────────────────────┐
-                         │   GitHub Actions      │
-                         │   (deploy.yml)        │
-                         │   workflow_dispatch   │
-                         └──────┬───────────────┘
-                                │
-                ┌───────────────┼───────────────┐
-                │               │               │
-                ▼               ▼               ▼
-     Build & Push        Terraform         Validation
-     (Registry Prive)    (Infra EC2)       (curl)
-                         │
-                         ▼
-                    Ansible (Config + Deploy)
+Le dossier `aws/` est separe en deux composants:
 
-┌─────────────────────────┐    ┌─────────────────────────┐
-│  EC2 Registry           │    │  EC2 Applicative        │
-│  (t3.micro, eu-west-3)  │    │  (t3.micro, eu-west-3)  │
-│                         │    │                         │
-│  nginx (HTTPS :443)     │    │  nginx (HTTP :80)       │
-│  ├── /v2/ → registry    │    │  ├── React Frontend     │
-│  └── /    → ui          │    │  └── Build-time auth    │
-│  registry:2             │    │  FastAPI (:8000)        │
-│  registry-ui            │    │  MySQL (interne)        │
-│  SSL auto-signe         │    │  Adminer (:8080)        │
-└─────────────────────────┘    └─────────────────────────┘
+- `aws/registry`: heberge le registry Docker prive. Il sert a stocker les images `backend:latest` et `frontend:latest` construites par GitHub Actions.
+- `aws/app`: heberge l'application. L'EC2 applicative installe Docker, se connecte au registry prive, pull les images, puis lance la stack applicative.
+
+Flux de deploiement AWS:
+
+```txt
+GitHub Actions deploy-aws
+  -> build backend/frontend
+  -> push images vers le registry Docker prive
+  -> Terraform cree/remplace l'EC2 applicative
+  -> Ansible configure l'EC2 applicative
+  -> docker compose up -d sur l'EC2 applicative
+  -> curl valide le frontend et l'API
 ```
+
+Le registry est une dependance d'infrastructure: il doit etre deploye avant le workflow `Deploy AWS` et rester disponible pendant les builds/pulls Docker.
 
 ## Structure du Projet
 
-```
+```txt
 .
-├── .github/workflows/
-│   ├── build_test_deploy_react.yml   # CI existante (GitHub Pages, Vercel, Docker Hub)
-│   └── deploy.yml                    # Deploiement AWS (workflow_dispatch)
-├── registry/                         # Terraform + Ansible pour le Registry Docker prive
-│   ├── main.tf                       # Provisionne EC2, SG (22, 80, 443), cle SSH
-│   ├── playbook.yml                  # Installe Docker, SSL, Nginx, Registry
-│   ├── nginx.conf.j2                 # Template Nginx (HTTPS, routage /v2/ et /)
-│   ├── docker-compose.yml.j2         # Template Docker Compose (registry + ui + nginx)
-│   └── inventory.ini                 # Inventaire Ansible (genere dynamiquement par CI)
-├── infra/                            # Terraform pour l'EC2 Applicative
-│   └── main.tf                       # Provisionne EC2, SG (22, 80, 8000), cle SSH
-├── ansible/                          # Ansible pour le deploiement applicatif
-│   ├── playbook.yml                  # Installe Docker, login registry, deploy stack
-│   └── docker-compose.yml.j2         # Template Docker Compose prod (images du registry)
-├── Dockerfile.backend                # Image Python FastAPI
-├── Dockerfile.frontend               # Image React (build) + Nginx (runtime)
-├── docker-compose.yml                # Stack de developpement local
-├── server.py                         # Backend FastAPI (CRUD users)
-├── src/                              # Frontend React + Vite
-├── database/                         # Scripts SQL d'initialisation
-├── rendu.txt                         # Lien repo + IPs publiques
-├── .env.sample                       # Variables d'environnement et secrets a configurer
-└── README.md
+|-- .github/workflows/
+|   |-- build-test-deploy.yml      # CI/release hors AWS
+|   `-- deploy-aws.yml             # Build images + provisionnement/deploiement AWS
+|-- aws/
+|   |-- app/
+|   |   |-- terraform/
+|   |   |   `-- main.tf             # EC2 applicative, security group, cle SSH
+|   |   `-- ansible/
+|   |       |-- playbook.yml        # Docker login registry + deploiement applicatif
+|   |       `-- docker-compose.yml.j2
+|   `-- registry/
+|       |-- terraform/
+|       |   |-- main.tf             # EC2 registry, security group, cle SSH
+|       |   `-- .terraform.lock.hcl
+|       `-- ansible/
+|           |-- playbook.yml        # Registry Docker prive + Nginx HTTPS + UI
+|           |-- docker-compose.yml.j2
+|           |-- nginx.conf.j2
+|           `-- inventory.example.ini
+|-- docker-compose.yml              # Stack locale / tests Docker
+|-- Dockerfile.backend
+|-- Dockerfile.frontend
+|-- database/                       # Scripts SQL d'initialisation MySQL
+|-- server.py                       # API FastAPI
+`-- src/                            # Frontend React + Vite
 ```
 
-## Deploiement
+## Deploiement AWS
 
-### Pre-requis
+### Registry Docker prive
 
-1. Configurer les secrets GitHub (voir `.env.sample`)
-2. Avoir un Registry Docker prive deja deploye sur AWS (via `registry/`)
+Le registry est gere par `aws/registry`:
 
-### Lancer le deploiement
+```bash
+cd aws/registry/terraform
+terraform init
+terraform apply
+```
 
-1. Aller dans l'onglet **Actions** du repository GitHub
-2. Selectionner le workflow **Deploy**
-3. Cliquer sur **Run workflow**
+Puis renseigner l'inventaire Ansible depuis `aws/registry/ansible/inventory.example.ini` et lancer:
 
-### Etapes du pipeline
+```bash
+cd ../ansible
+ansible-playbook -i inventory.ini playbook.yml
+```
 
-| Etape | Description |
-|---|---|
-| **Build & Publish** | Construction des images Docker (frontend + backend) et push vers le registry prive |
-| **Terraform** | Provisionnement d'une EC2 t3.micro Ubuntu 24.04 avec Security Group (22, 80, 8000) |
-| **Bridge** | Generation de l'inventaire Ansible a partir des outputs Terraform (IP, cle SSH) |
-| **Ansible** | Installation Docker, authentification registry, deploiement de la stack applicative |
-| **Validation** | Tests HTTP (curl) sur le frontend et l'API backend |
+### Application
+
+Le workflow GitHub Actions `Deploy AWS` utilise `aws/app`:
+
+- Terraform cree l'EC2 applicative.
+- Le workflow genere `aws/app/ansible/inventory.ini`.
+- Ansible copie les scripts SQL, genere le `.env` distant et lance Docker Compose.
+
+Secrets principaux attendus:
+
+```txt
+AWS_ACCESS_KEY_ID
+AWS_SECRET_ACCESS_KEY
+REGISTRY_URL
+REGISTRY_USER
+REGISTRY_PASSWORD
+MYSQL_PASSWORD
+MYSQL_DATABASE
+MYSQL_USER
+MYSQL_HOST
+AUTH_USERNAME
+AUTH_PASSWORD
+```
+
+Pour la DB Docker interne a l'EC2 applicative, utiliser typiquement:
+
+```txt
+MYSQL_HOST=db
+MYSQL_DATABASE=ynov_ci
+MYSQL_USER=root
+```
 
 ## Developpement Local
 
 ```bash
-# Installer les dependances
 npm ci
-
-# Lancer le frontend en dev
 npm run dev
-
-# Lancer la stack complete (Docker)
-docker compose up --build
-
-# Tests
 npm test
-npm run cypress
+docker compose up --build
 ```

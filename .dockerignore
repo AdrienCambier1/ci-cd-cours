@@ -7,3 +7,10 @@ coverage
 *.log
 __pycache__
 *.pyc
+aws/
+infra/
+registry/
+*.tfstate
+*.tfstate.*
+*.tfplan
+*.pem

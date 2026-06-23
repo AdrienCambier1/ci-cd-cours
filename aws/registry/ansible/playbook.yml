@@ -4,7 +4,6 @@
 
   vars:
     project_dir: /home/ubuntu/registry-stack
-    # On garde ta logique, mais on utilisera l'IP dynamique récupérée via ipify si disponible
     public_ip: "{{ inventory_hostname }}"
 
   tasks:
@@ -40,10 +39,13 @@
 
     - name: Creer le compte Registry admin
       ansible.builtin.command:
-        cmd: >-
-          htpasswd -bc {{ project_dir }}/auth/registry.password
-          admin admin123
-        creates: "{{ project_dir }}/auth/registry.password"
+        argv:
+          - htpasswd
+          - -Bbc
+          - "{{ project_dir }}/auth/registry.password"
+          - "{{ REGISTRY_USER | default('admin', true) }}"
+          - "{{ REGISTRY_PASSWORD | default('admin', true) }}"
+      no_log: true
 
     - name: Proteger le fichier de mots de passe
       ansible.builtin.file:
@@ -52,19 +54,7 @@
         group: ubuntu
         mode: "0640"
 
-    # --- AJOUT PHASE 2 : RÉCUPÉRATION DE L'IP ET GÉNÉRATION SSL ---
-    - name: Recuperer l'IP publique de l'instance
-      ansible.builtin.uri:
-        url: https://api.ipify.org
-        return_content: true
-      register: public_ip_response
-      ignore_errors: true
-
-    - name: Definir la variable d'IP publique dynamiquement
-      ansible.builtin.set_fact:
-        public_ip: "{{ public_ip_response.content if public_ip_response.status == 200 else inventory_hostname }}"
-
-    - name: Creer le certificat SSL auto-signé (A la volee)
+    - name: Creer le certificat SSL auto-signe (A la volee)
       ansible.builtin.command:
         cmd: >
           openssl req -x509 -nodes -days 365 
@@ -75,17 +65,20 @@
           -addext "subjectAltName=IP:{{ public_ip }}"
         creates: "{{ project_dir }}/certs/registry.crt"
 
-    - name: Harmoniser la possession des certificats
+    - name: Proteger la cle privee SSL
       ansible.builtin.file:
-        path: "{{ item }}"
+        path: "{{ project_dir }}/certs/registry.key"
+        owner: ubuntu
+        group: ubuntu
+        mode: "0600"
+
+    - name: Publier le certificat SSL
+      ansible.builtin.file:
+        path: "{{ project_dir }}/certs/registry.crt"
         owner: ubuntu
         group: ubuntu
         mode: "0644"
-      loop:
-        - "{{ project_dir }}/certs/registry.key"
-        - "{{ project_dir }}/certs/registry.crt"
 
-    # --- AJOUT PHASE 2 : CONFIGURATION DE L'INTELLIGENT ROUTING (NGINX) ---
     - name: Copier le template de configuration Nginx
       ansible.builtin.template:
         src: nginx.conf.j2

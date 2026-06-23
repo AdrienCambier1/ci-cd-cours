@@ -52,11 +52,13 @@
         cmd: >-
           docker login {{ REGISTRY_URL }}
           --username {{ REGISTRY_USER }}
-          --password {{ REGISTRY_PASSWORD }}
+          --password-stdin
+        stdin: "{{ REGISTRY_PASSWORD }}"
+      no_log: true
 
     - name: Copier les scripts d'initialisation de la base de donnees
       ansible.builtin.copy:
-        src: "{{ playbook_dir }}/../database/"
+        src: "{{ playbook_dir }}/../../../database/"
         dest: "{{ project_dir }}/database/"
         owner: ubuntu
         group: ubuntu
@@ -85,6 +87,7 @@
         owner: ubuntu
         group: ubuntu
         mode: "0640"
+      no_log: true
 
     - name: Demarrer la stack applicative
       ansible.builtin.command:
