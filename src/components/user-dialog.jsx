@@ -131,6 +131,7 @@ function UserDialog({
                   id="lastName"
                   name="lastName"
                   value={formData.lastName}
+                  disabled={isSubmitting}
                   onChange={handleChange}
                   aria-invalid={!!errors.lastName}
                   aria-describedby={
@@ -144,6 +145,7 @@ function UserDialog({
                   id="firstName"
                   name="firstName"
                   value={formData.firstName}
+                  disabled={isSubmitting}
                   onChange={handleChange}
                   aria-invalid={!!errors.firstName}
                   aria-describedby={
@@ -159,6 +161,7 @@ function UserDialog({
                 name="email"
                 type="email"
                 value={formData.email}
+                disabled={isSubmitting}
                 onChange={handleChange}
                 aria-invalid={!!errors.email}
                 aria-describedby={errors.email ? "email-error" : undefined}
@@ -174,6 +177,7 @@ function UserDialog({
                 id="birthDate"
                 name="birthDate"
                 value={formData.birthDate}
+                disabled={isSubmitting}
                 onChange={handleChange}
                 aria-invalid={!!errors.birthDate}
                 aria-describedby={
@@ -187,6 +191,7 @@ function UserDialog({
                 id="city"
                 name="city"
                 value={formData.city}
+                disabled={isSubmitting}
                 onChange={handleChange}
                 aria-invalid={!!errors.city}
                 aria-describedby={errors.city ? "city-error" : undefined}
@@ -204,6 +209,7 @@ function UserDialog({
                 inputMode="numeric"
                 maxLength={5}
                 value={formData.postalCode}
+                disabled={isSubmitting}
                 onChange={handleChange}
                 aria-invalid={!!errors.postalCode}
                 aria-describedby={
@@ -215,7 +221,11 @@ function UserDialog({
         </form>
 
         <DialogFooter>
-          <DialogClose render={<Button type="button" variant="outline" />}>
+          <DialogClose
+            render={
+              <Button disabled={isSubmitting} type="button" variant="outline" />
+            }
+          >
             Annuler
           </DialogClose>
           <Button type="submit" form={formId} disabled={isSubmitting}>
