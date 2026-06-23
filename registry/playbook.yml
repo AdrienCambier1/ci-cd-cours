@@ -72,7 +72,7 @@
           -keyout {{ project_dir }}/certs/registry.key 
           -out {{ project_dir }}/certs/registry.crt 
           -subj "/CN={{ public_ip }}"
-        [cite_start]creates: "{{ project_dir }}/certs/registry.crt" [cite: 32, 34]
+        creates: "{{ project_dir }}/certs/registry.crt"
 
     - name: Harmoniser la possession des certificats
       ansible.builtin.file:
@@ -91,7 +91,7 @@
         dest: "{{ project_dir }}/nginx/nginx.conf"
         owner: ubuntu
         group: ubuntu
-        [cite_start]mode: "0644" [cite: 36, 40]
+        mode: "0644"
 
     - name: Copier le template Docker Compose
       ansible.builtin.template:
@@ -99,7 +99,7 @@
         dest: "{{ project_dir }}/docker-compose.yml"
         owner: ubuntu
         group: ubuntu
-        [cite_start]mode: "0644" [cite: 42]
+        mode: "0644"
 
     - name: Demarrer la stack Registry
       ansible.builtin.command:

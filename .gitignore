@@ -36,3 +36,8 @@ public/docs
 *.tfplan
 registry/terraform-user_accessKeys.csv
 registry/registry-key-terraform.pem
+infra/app-key-terraform.pem
+infra/terraform-user_accessKeys.csv
+
+# Ansible inventory genere dynamiquement
+ansible/inventory.ini

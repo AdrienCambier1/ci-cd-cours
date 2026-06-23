@@ -1,0 +1,79 @@
+- name: Deploiement de la stack applicative
+  hosts: app_hosts
+  become: true
+
+  vars:
+    project_dir: /home/ubuntu/app-stack
+
+  tasks:
+    - name: Installer Docker et les outils requis
+      ansible.builtin.apt:
+        update_cache: true
+        name:
+          - docker.io
+          - docker-compose-v2
+        state: present
+
+    - name: Ajouter l'utilisateur ubuntu au groupe docker
+      ansible.builtin.user:
+        name: ubuntu
+        groups: docker
+        append: true
+
+    - name: Creer le dossier du projet applicatif
+      ansible.builtin.file:
+        path: "{{ project_dir }}"
+        state: directory
+        owner: ubuntu
+        group: ubuntu
+        mode: "0755"
+
+    - name: Authentification au registre Docker prive
+      ansible.builtin.command:
+        cmd: >-
+          docker login {{ REGISTRY_URL }}
+          --username {{ REGISTRY_USER }}
+          --password {{ REGISTRY_PASSWORD }}
+
+    - name: Copier les scripts d'initialisation de la base de donnees
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/../database/"
+        dest: "{{ project_dir }}/database/"
+        owner: ubuntu
+        group: ubuntu
+        mode: "0755"
+
+    - name: Generer le docker-compose applicatif
+      ansible.builtin.template:
+        src: docker-compose.yml.j2
+        dest: "{{ project_dir }}/docker-compose.yml"
+        owner: ubuntu
+        group: ubuntu
+        mode: "0644"
+
+    - name: Creer le fichier .env applicatif
+      ansible.builtin.copy:
+        dest: "{{ project_dir }}/.env"
+        content: |
+          MYSQL_PASSWORD={{ MYSQL_PASSWORD }}
+          MYSQL_PORT=3306
+          MYSQL_DATABASE={{ MYSQL_DATABASE }}
+          MYSQL_USER={{ MYSQL_USER }}
+          MYSQL_HOST={{ MYSQL_HOST }}
+          AUTH_USERNAME={{ AUTH_USERNAME }}
+          AUTH_PASSWORD={{ AUTH_PASSWORD }}
+          API_URL=http://{{ inventory_hostname }}:8000
+        owner: ubuntu
+        group: ubuntu
+        mode: "0640"
+
+    - name: Demarrer la stack applicative
+      ansible.builtin.command:
+        cmd: docker compose up -d
+        chdir: "{{ project_dir }}"
+      register: compose_up
+      changed_when: >-
+        'Started' in compose_up.stderr or
+        'Created' in compose_up.stderr or
+        'Recreated' in compose_up.stderr or
+        'Running' in compose_up.stdout

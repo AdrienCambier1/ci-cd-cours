@@ -31,30 +31,28 @@ data "aws_ami" "ubuntu" {
   }
 }
 
-# Creation de la cle SSH
 resource "tls_private_key" "pk" {
   algorithm = "RSA"
   rsa_bits  = 4096
 }
 
 resource "aws_key_pair" "generated_key" {
-  key_name   = "registry-key-terraform"
+  key_name   = "app-key-terraform"
   public_key = tls_private_key.pk.public_key_openssh
 }
 
-# Sauvegarde de la cle privee locale pour Ansible
 resource "local_file" "ssh_key" {
-  filename        = "${path.module}/registry-key-terraform.pem"
+  filename        = "${path.module}/app-key-terraform.pem"
   content         = tls_private_key.pk.private_key_pem
   file_permission = "0400"
 }
 
-resource "aws_security_group" "registry_sg" {
-  name        = "registry-sg-simple"
-  description = "Allow SSH, HTTP (UI/redirect), HTTPS (Docker API)"
+resource "aws_security_group" "app_sg" {
+  name        = "app-sg"
+  description = "Allow SSH, HTTP (frontend), API (backend)"
 
   ingress {
-    description = "SSH"
+    description = "SSH (Ansible)"
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
@@ -62,7 +60,7 @@ resource "aws_security_group" "registry_sg" {
   }
 
   ingress {
-    description = "HTTP (redirect to HTTPS)"
+    description = "HTTP (frontend)"
     from_port   = 80
     to_port     = 80
     protocol    = "tcp"
@@ -70,9 +68,9 @@ resource "aws_security_group" "registry_sg" {
   }
 
   ingress {
-    description = "HTTPS (Docker API + UI)"
-    from_port   = 443
-    to_port     = 443
+    description = "API backend"
+    from_port   = 8000
+    to_port     = 8000
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
@@ -85,12 +83,11 @@ resource "aws_security_group" "registry_sg" {
   }
 }
 
-# Instance EC2
-resource "aws_instance" "registry_server" {
+resource "aws_instance" "app_server" {
   ami                    = data.aws_ami.ubuntu.id
   instance_type          = "t3.micro"
   key_name               = aws_key_pair.generated_key.key_name
-  vpc_security_group_ids = [aws_security_group.registry_sg.id]
+  vpc_security_group_ids = [aws_security_group.app_sg.id]
 
   root_block_device {
     volume_size = 20
@@ -98,11 +95,16 @@ resource "aws_instance" "registry_server" {
   }
 
   tags = {
-    Name = "Terraform-Registry-Server"
+    Name = "Terraform-App-Server"
   }
 }
 
-# Output (pour recuperer l'IP facilement)
 output "instance_ip" {
-  value = aws_instance.registry_server.public_ip
+  value       = aws_instance.app_server.public_ip
+  description = "IP publique de l'instance applicative"
+}
+
+output "ssh_private_key_path" {
+  value       = local_file.ssh_key.filename
+  description = "Chemin local vers la cle privee SSH"
 }

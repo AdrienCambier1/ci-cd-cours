@@ -1,0 +1,48 @@
+services:
+  db:
+    image: mysql:oraclelinux9
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./database:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: 'mysql -u root -p$${MYSQL_ROOT_PASSWORD} -e "SHOW DATABASES;"'
+
+  api:
+    image: {{ REGISTRY_URL }}/backend:latest
+    restart: always
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test: 'python -c "import urllib.request; urllib.request.urlopen(''http://localhost:8000/users'')"'
+
+  adminer:
+    image: adminer
+    restart: always
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+
+  web:
+    image: {{ REGISTRY_URL }}/frontend:latest
+    restart: always
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - "80:80"
+    healthcheck:
+      test: "curl --fail http://localhost:80"
+
+volumes:
+  db_data:
