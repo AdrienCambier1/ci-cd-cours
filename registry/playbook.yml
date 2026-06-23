@@ -4,6 +4,7 @@
 
   vars:
     project_dir: /home/ubuntu/registry-stack
+    # On garde ta logique, mais on utilisera l'IP dynamique récupérée via ipify si disponible
     public_ip: "{{ inventory_hostname }}"
 
   tasks:
@@ -14,6 +15,7 @@
           - docker.io
           - docker-compose-v2
           - apache2-utils
+          - openssl
         state: present
 
     - name: Ajouter l'utilisateur ubuntu au groupe docker
@@ -22,7 +24,7 @@
         groups: docker
         append: true
 
-    - name: Creer les dossiers du Registry
+    - name: Creer les dossiers du Registry et de Nginx
       ansible.builtin.file:
         path: "{{ item }}"
         state: directory
@@ -33,6 +35,8 @@
         - "{{ project_dir }}"
         - "{{ project_dir }}/auth"
         - "{{ project_dir }}/data"
+        - "{{ project_dir }}/nginx"
+        - "{{ project_dir }}/certs"
 
     - name: Creer le compte Registry admin
       ansible.builtin.command:
@@ -48,13 +52,54 @@
         group: ubuntu
         mode: "0640"
 
-    - name: Copier le template Docker Compose
-      ansible.builtin.template:
-        src: docker-compose.yml
-        dest: "{{ project_dir }}/docker-compose.yml"
+    # --- AJOUT PHASE 2 : RÉCUPÉRATION DE L'IP ET GÉNÉRATION SSL ---
+    - name: Recuperer l'IP publique de l'instance
+      ansible.builtin.uri:
+        url: https://api.ipify.org
+        return_content: true
+      register: public_ip_response
+      ignore_errors: true
+
+    - name: Definir la variable d'IP publique dynamiquement
+      ansible.builtin.set_fact:
+        public_ip: "{{ public_ip_response.content if public_ip_response.status == 200 else inventory_hostname }}"
+
+    - name: Creer le certificat SSL auto-signé (A la volee)
+      ansible.builtin.command:
+        cmd: >
+          openssl req -x509 -nodes -days 365 
+          -newkey rsa:2048 
+          -keyout {{ project_dir }}/certs/registry.key 
+          -out {{ project_dir }}/certs/registry.crt 
+          -subj "/CN={{ public_ip }}"
+        [cite_start]creates: "{{ project_dir }}/certs/registry.crt" [cite: 32, 34]
+
+    - name: Harmoniser la possession des certificats
+      ansible.builtin.file:
+        path: "{{ item }}"
         owner: ubuntu
         group: ubuntu
         mode: "0644"
+      loop:
+        - "{{ project_dir }}/certs/registry.key"
+        - "{{ project_dir }}/certs/registry.crt"
+
+    # --- AJOUT PHASE 2 : CONFIGURATION DE L'INTELLIGENT ROUTING (NGINX) ---
+    - name: Copier le template de configuration Nginx
+      ansible.builtin.template:
+        src: nginx.conf.j2
+        dest: "{{ project_dir }}/nginx/nginx.conf"
+        owner: ubuntu
+        group: ubuntu
+        [cite_start]mode: "0644" [cite: 36, 40]
+
+    - name: Copier le template Docker Compose
+      ansible.builtin.template:
+        src: docker-compose.yml.j2
+        dest: "{{ project_dir }}/docker-compose.yml"
+        owner: ubuntu
+        group: ubuntu
+        [cite_start]mode: "0644" [cite: 42]
 
     - name: Demarrer la stack Registry
       ansible.builtin.command:
@@ -64,25 +109,5 @@
       changed_when: >-
         'Started' in compose_up.stderr or
         'Created' in compose_up.stderr or
-        'Recreated' in compose_up.stderr
-
-  block:
-    - name: Récupérer l'IP publique de l'instance
-      ansible.builtin.uri:
-        url: https://api.ipify.org
-        return_content: true
-      register: public_ip_response
-
-    - name: Définir le fait pour l'IP publique
-      ansible.builtin.set_fact:
-        public_ip: "{{ public_ip_response.content }}"
-
-    - name: Créer le certificat SSL auto-signé et la clé privée
-      ansible.builtin.command: >
-        openssl req -x509 -nodes -days 365 
-        -newkey rsa:2048 
-        -keyout /etc/ssl/private/selfsigned.key 
-        -out /etc/ssl/certs/selfsigned.crt 
-        -subj "/CN={{ public_ip }}"
-      args:
-        creates: /etc/ssl/certs/selfsigned.crt
+        'Recreated' in compose_up.stderr or
+        'Running' in compose_up.stdout
