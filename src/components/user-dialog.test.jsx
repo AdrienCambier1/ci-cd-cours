@@ -12,6 +12,15 @@ const validFormData = {
   postalCode: "75001",
 };
 
+const invalidFormData = {
+  lastName: "D",
+  firstName: "J",
+  email: "jean.dupont@example.com",
+  birthDate: "2999-01-15",
+  city: "Paris1",
+  postalCode: "75",
+};
+
 const userFixture = {
   id: 1,
   last_name: "Dupont",
@@ -41,12 +50,26 @@ describe("UserDialog", () => {
     expect(screen.getByText("Renseignez les informations.")).toBeInTheDocument();
   });
 
-  it("shows validation errors next to invalid fields", async () => {
+  it("disables submit until required fields are complete", () => {
+    render(
+      <UserDialog
+        open
+        title="Creer un utilisateur"
+        description="Renseignez les informations."
+        submitLabel="Creer"
+      />,
+    );
+
+    expect(screen.getByRole("button", { name: "Creer" })).toBeDisabled();
+  });
+
+  it("shows validation errors next to invalid filled fields", async () => {
     const onSubmit = jest.fn();
 
     render(
       <UserDialog
         open
+        initialValues={invalidFormData}
         onSubmit={onSubmit}
         title="Creer un utilisateur"
         description="Renseignez les informations."
@@ -56,13 +79,14 @@ describe("UserDialog", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Creer" }));
 
-    expect(await screen.findAllByText("Ce champ est requis")).toHaveLength(2);
-    expect(screen.getByText("L'email est requis")).toBeInTheDocument();
+    expect(await screen.findAllByText(/^Minimum 2/)).toHaveLength(2);
     expect(
-      screen.getByText("La date de naissance est requise"),
+      screen.getByText("Vous devez avoir au moins 18 ans"),
     ).toBeInTheDocument();
-    expect(screen.getByText("La ville est requise")).toBeInTheDocument();
-    expect(screen.getByText("Le code postal est requis")).toBeInTheDocument();
+    expect(screen.getByText(/^Caract/)).toBeInTheDocument();
+    expect(
+      screen.getByText("Format invalide (5 chiffres requis)"),
+    ).toBeInTheDocument();
     expect(onSubmit).not.toHaveBeenCalled();
   });
 
@@ -70,6 +94,7 @@ describe("UserDialog", () => {
     render(
       <UserDialog
         open
+        initialValues={{ ...validFormData, lastName: "D" }}
         title="Creer un utilisateur"
         description="Renseignez les informations."
         submitLabel="Creer"
@@ -79,7 +104,7 @@ describe("UserDialog", () => {
     fireEvent.click(screen.getByRole("button", { name: "Creer" }));
 
     const lastNameInput = screen.getByLabelText("Nom");
-    expect(await screen.findAllByText("Ce champ est requis")).toHaveLength(2);
+    expect(await screen.findByText(/^Minimum 2/)).toBeInTheDocument();
     expect(lastNameInput).toHaveAttribute("aria-invalid", "true");
 
     fireEvent.change(lastNameInput, { target: { value: "Dupont" } });
