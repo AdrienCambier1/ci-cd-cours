@@ -65,6 +65,25 @@ jobs:
         with:
           terraform_wrapper: false
 
+      - name: Cleanup previous ephemeral resources
+        run: |
+          echo "Cleaning up previous deployment resources..."
+          INSTANCE_ID=$(aws ec2 describe-instances \
+            --filters "Name=tag:Name,Values=Terraform-App-Server" "Name=instance-state-name,Values=running,pending,stopping,stopped" \
+            --query "Reservations[*].Instances[*].InstanceId" --output text \
+            --region eu-west-3)
+          if [ -n "$INSTANCE_ID" ] && [ "$INSTANCE_ID" != "None" ]; then
+            echo "Terminating old EC2 instance: $INSTANCE_ID"
+            aws ec2 terminate-instances --instance-ids $INSTANCE_ID --region eu-west-3
+            echo "Waiting for termination..."
+            aws ec2 wait instance-terminated --instance-ids $INSTANCE_ID --region eu-west-3
+          fi
+          echo "Deleting old key pair..."
+          aws ec2 delete-key-pair --key-name app-key-terraform --region eu-west-3 2>/dev/null || true
+          echo "Deleting old security group..."
+          aws ec2 delete-security-group --group-name app-sg --region eu-west-3 2>/dev/null || true
+          echo "Cleanup done."
+
       - name: Terraform init
         working-directory: infra
         run: terraform init
