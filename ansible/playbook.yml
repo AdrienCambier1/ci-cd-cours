@@ -44,6 +44,9 @@
         name: docker
         state: restarted
 
+    - name: Reinitialiser la connexion SSH
+      ansible.builtin.meta: reset_connection
+
     - name: Authentification au registre Docker prive
       ansible.builtin.command:
         cmd: >-
@@ -87,6 +90,8 @@
       ansible.builtin.command:
         cmd: docker compose up -d
         chdir: "{{ project_dir }}"
+      async: 600
+      poll: 10
       register: compose_up
       changed_when: >-
         'Started' in compose_up.stderr or
