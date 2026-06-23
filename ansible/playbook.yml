@@ -28,6 +28,22 @@
         group: ubuntu
         mode: "0755"
 
+    - name: Configurer Docker pour accepter le registry self-signed
+      ansible.builtin.copy:
+        dest: /etc/docker/daemon.json
+        content: |
+          {
+            "insecure-registries": ["{{ REGISTRY_URL }}"]
+          }
+        owner: root
+        group: root
+        mode: "0644"
+
+    - name: Redemarrer Docker
+      ansible.builtin.systemd:
+        name: docker
+        state: restarted
+
     - name: Authentification au registre Docker prive
       ansible.builtin.command:
         cmd: >-

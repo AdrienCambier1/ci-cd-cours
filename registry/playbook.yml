@@ -71,7 +71,8 @@
           -newkey rsa:2048 
           -keyout {{ project_dir }}/certs/registry.key 
           -out {{ project_dir }}/certs/registry.crt 
-          -subj "/CN={{ public_ip }}"
+          -subj "/CN={{ public_ip }}" 
+          -addext "subjectAltName=IP:{{ public_ip }}"
         creates: "{{ project_dir }}/certs/registry.crt"
 
     - name: Harmoniser la possession des certificats
