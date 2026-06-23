@@ -1,4 +1,3 @@
----
 - name: Deploiement d'un Registry Docker securise
   hosts: registry_hosts
   become: true
@@ -66,3 +65,24 @@
         'Started' in compose_up.stderr or
         'Created' in compose_up.stderr or
         'Recreated' in compose_up.stderr
+
+  block:
+    - name: Récupérer l'IP publique de l'instance
+      ansible.builtin.uri:
+        url: https://api.ipify.org
+        return_content: true
+      register: public_ip_response
+
+    - name: Définir le fait pour l'IP publique
+      ansible.builtin.set_fact:
+        public_ip: "{{ public_ip_response.content }}"
+
+    - name: Créer le certificat SSL auto-signé et la clé privée
+      ansible.builtin.command: >
+        openssl req -x509 -nodes -days 365 
+        -newkey rsa:2048 
+        -keyout /etc/ssl/private/selfsigned.key 
+        -out /etc/ssl/certs/selfsigned.crt 
+        -subj "/CN={{ public_ip }}"
+      args:
+        creates: /etc/ssl/certs/selfsigned.crt
