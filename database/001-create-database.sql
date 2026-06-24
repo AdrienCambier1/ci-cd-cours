@@ -1,1 +1,1 @@
-CREATE DATABASE IF NOT EXISTS ynov_ci;
+CREATE DATABASE IF NOT EXISTS adriencambier_ynov_ci;
