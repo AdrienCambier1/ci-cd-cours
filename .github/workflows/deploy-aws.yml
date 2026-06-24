@@ -126,8 +126,8 @@ jobs:
           REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
           MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
           MYSQL_DATABASE: ${{ secrets.MYSQL_DATABASE }}
-          MYSQL_USER: ${{ secrets.MYSQL_USER }}
-          MYSQL_HOST: ${{ secrets.MYSQL_HOST }}
+          MYSQL_USER: root
+          MYSQL_HOST: db
           AUTH_USERNAME: ${{ secrets.AUTH_USERNAME }}
           AUTH_PASSWORD: ${{ secrets.AUTH_PASSWORD }}
         run: |
@@ -137,8 +137,8 @@ jobs:
             -e REGISTRY_PASSWORD="${REGISTRY_PASSWORD}" \
             -e MYSQL_PASSWORD="${MYSQL_PASSWORD}" \
             -e MYSQL_DATABASE="${MYSQL_DATABASE}" \
-            -e MYSQL_USER="${MYSQL_USER}" \
-            -e MYSQL_HOST="${MYSQL_HOST}" \
+            -e MYSQL_USER=root \
+            -e MYSQL_HOST=db \
             -e AUTH_USERNAME="${AUTH_USERNAME}" \
             -e AUTH_PASSWORD="${AUTH_PASSWORD}"
 
