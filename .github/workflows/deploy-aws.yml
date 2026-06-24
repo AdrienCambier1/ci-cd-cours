@@ -98,12 +98,25 @@ jobs:
       - name: Bridge - generate inventory
         run: |
           echo "[app_hosts]" > aws/app/ansible/inventory.ini
-          echo "${{ steps.terraform.outputs.instance_ip }} ansible_user=ubuntu ansible_ssh_private_key_file=${{ github.workspace }}/aws/app/terraform/app-key-terraform.pem ansible_ssh_common_args='-o StrictHostKeyChecking=no'" >> aws/app/ansible/inventory.ini
+          echo "${{ steps.terraform.outputs.instance_ip }} ansible_user=ubuntu ansible_ssh_private_key_file=${{ github.workspace }}/aws/app/terraform/app-key-terraform.pem ansible_ssh_common_args='-o StrictHostKeyChecking=no -o ConnectTimeout=30'" >> aws/app/ansible/inventory.ini
 
       - name: Install Ansible
         run: |
           sudo apt-get update
           sudo apt-get install -y ansible
+
+      - name: Wait for SSH to be ready
+        run: |
+          echo "Waiting for SSH on ${{ steps.terraform.outputs.instance_ip }}..."
+          for i in $(seq 1 30); do
+            ssh -o StrictHostKeyChecking=no -o ConnectTimeout=5 \
+              -i aws/app/terraform/app-key-terraform.pem \
+              ubuntu@${{ steps.terraform.outputs.instance_ip }} "echo ok" 2>/dev/null && exit 0
+            echo "Attempt $i/30: not ready, waiting 10s..."
+            sleep 10
+          done
+          echo "SSH still not reachable after 30 attempts"
+          exit 1
 
       - name: Run Ansible playbook
         working-directory: aws/app/ansible
