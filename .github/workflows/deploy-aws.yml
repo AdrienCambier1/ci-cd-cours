@@ -1,6 +1,8 @@
 name: Deploy AWS
 
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
 
 jobs:
@@ -56,6 +58,15 @@ jobs:
           sudo mkdir -p /etc/docker
           echo '{"insecure-registries":["${{ secrets.REGISTRY_URL }}"]}' | sudo tee /etc/docker/daemon.json
           sudo systemctl restart docker
+
+      - name: Verify registry is reachable
+        run: |
+          echo "Checking registry at ${{ secrets.REGISTRY_URL }}..."
+          curl --fail --max-time 10 -u "${{ secrets.REGISTRY_USER }}:${{ secrets.REGISTRY_PASSWORD }}" \
+            "https://${{ secrets.REGISTRY_URL }}/v2/" || {
+            echo "ERROR: Registry is unreachable. Ensure the registry EC2 is deployed and running."
+            exit 1
+          }
 
       - name: Login to private Docker registry
         uses: docker/login-action@v3
@@ -127,3 +138,20 @@ jobs:
         run: |
           echo "Testing API at http://${{ steps.terraform.outputs.instance_ip }}:8000/users"
           curl --fail --max-time 30 "http://${{ steps.terraform.outputs.instance_ip }}:8000/users"
+
+      - name: Rollback - terminate EC2 on failure
+        if: failure() && steps.terraform.outputs.instance_ip != ''
+        run: |
+          echo "Deployment failed, cleaning up EC2 instance..."
+          INSTANCE_ID=$(aws ec2 describe-instances \
+            --filters "Name=tag:Name,Values=Terraform-App-Server" "Name=instance-state-name,Values=running,pending,stopping,stopped" \
+            --query "Reservations[*].Instances[*].InstanceId" --output text \
+            --region "$AWS_REGION")
+          if [ -n "$INSTANCE_ID" ] && [ "$INSTANCE_ID" != "None" ]; then
+            echo "Terminating EC2 instance: $INSTANCE_ID"
+            aws ec2 terminate-instances --instance-ids $INSTANCE_ID --region "$AWS_REGION"
+            aws ec2 wait instance-terminated --instance-ids $INSTANCE_ID --region "$AWS_REGION"
+          fi
+          aws ec2 delete-key-pair --key-name app-key-terraform --region "$AWS_REGION" 2>/dev/null || true
+          aws ec2 delete-security-group --group-name app-sg --region "$AWS_REGION" 2>/dev/null || true
+          echo "Rollback cleanup done."

@@ -81,14 +81,14 @@ jobs:
 
       - name: Create env file
         run: |
-          echo "MYSQL_PASSWORD=adrien" > .env
+          echo "MYSQL_PASSWORD=${{ secrets.MYSQL_PASSWORD }}" > .env
           echo "MYSQL_PORT=3306" >> .env
-          echo "MYSQL_DATABASE=ynov_ci" >> .env
-          echo "MYSQL_USER=root" >> .env
-          echo "MYSQL_HOST=db" >> .env
-          echo "AUTH_USERNAME=admin" >> .env
-          echo "AUTH_PASSWORD=admin" >> .env
-          echo "API_URL=http://localhost:8000" >> .env
+          echo "MYSQL_DATABASE=${{ secrets.MYSQL_DATABASE }}" >> .env
+          echo "MYSQL_USER=${{ secrets.MYSQL_USER }}" >> .env
+          echo "MYSQL_HOST=${{ secrets.MYSQL_HOST }}" >> .env
+          echo "AUTH_USERNAME=${{ secrets.AUTH_USERNAME }}" >> .env
+          echo "AUTH_PASSWORD=${{ secrets.AUTH_PASSWORD }}" >> .env
+          echo "API_URL=${{ secrets.API_URL }}" >> .env
 
       - name: Start Docker Compose and check services health
         run: docker compose up --build --wait --wait-timeout 180
