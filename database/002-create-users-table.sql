@@ -1,4 +1,4 @@
-USE ynov_ci;
+USE adriencambier_ynov_ci;
 
 CREATE TABLE IF NOT EXISTS users (
     id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
