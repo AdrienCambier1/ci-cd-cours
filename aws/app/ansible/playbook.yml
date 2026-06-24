@@ -50,6 +50,7 @@
           sed -n '/-----BEGIN CERTIFICATE-----/,/-----END CERTIFICATE-----/p' \
           > /tmp/registry-ca.crt
       args:
+        executable: /bin/bash
         creates: /tmp/registry-ca.crt
 
     - name: Creer le dossier des certificats Docker
