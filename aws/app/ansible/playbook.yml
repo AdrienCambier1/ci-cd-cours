@@ -43,29 +43,13 @@
         group: ubuntu
         mode: "0755"
 
-    - name: Recuperer le certificat du registry pour Docker
-      ansible.builtin.shell: |
-        set -o pipefail
-        echo | openssl s_client -connect {{ REGISTRY_URL }} 2>/dev/null | \
-          sed -n '/-----BEGIN CERTIFICATE-----/,/-----END CERTIFICATE-----/p' \
-          > /tmp/registry-ca.crt
-      args:
-        executable: /bin/bash
-        creates: /tmp/registry-ca.crt
-
-    - name: Creer le dossier des certificats Docker
-      ansible.builtin.file:
-        path: /etc/docker/certs.d/{{ REGISTRY_URL }}
-        state: directory
-        owner: root
-        group: root
-        mode: "0755"
-
-    - name: Installer le certificat du registry dans le trust store Docker
+    - name: Configurer Docker pour le registry self-signed
       ansible.builtin.copy:
-        src: /tmp/registry-ca.crt
-        dest: /etc/docker/certs.d/{{ REGISTRY_URL }}/ca.crt
-        remote_src: true
+        dest: /etc/docker/daemon.json
+        content: |
+          {
+            "insecure-registries": ["{{ REGISTRY_URL }}"]
+          }
         owner: root
         group: root
         mode: "0644"
